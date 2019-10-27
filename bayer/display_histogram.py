@@ -1,48 +1,54 @@
 ''' Try how rawpy is doing for raw image calculation stuff
 
 '''
-import rawpy
-# import rawpy.enhance
-
-import numpy as np
-from os.path import basename
-from argparse import ArgumentParser
+import glob
 import logging
+from argparse import ArgumentParser
+from os.path import basename
+
 import matplotlib.pyplot as plt
+import numpy as np
+import rawpy
+from astropy.stats import sigma_clipped_stats
+
+from bayer.utils import bayer_to_rgb, multi_glob
+
+
+# import rawpy.enhance
 
 
 def main():
     parser = ArgumentParser(description='Display histogram of a raw image')
-    parser.add_argument('filename', help='raw file name containing bayer matrix')
-    parser.add_argument('--percentile', '-p', default=99.99, help='percentile displayed in the title')
+    parser.add_argument('filenames', nargs='+', help='one or more raw files containing bayer matrices')
+    parser.add_argument('--sigma', '-s', default=3.0, help='sigma used for clipping')
+    parser.add_argument('--clipping', '-c', default=10.0, help='sigma used for clipping')
 
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO)
 
-    max_range = 2**12
+    max_range = 3651
 
-    with rawpy.imread(args.filename) as raw:
-        data = raw.raw_image_visible
+    for filename in multi_glob(args.filenames):
 
-        info = (basename(args.filename), np.min(data), np.mean(data), np.percentile(data, args.percentile), np.max(data))
+        with rawpy.imread(filename) as raw:
+            rgb = bayer_to_rgb(raw.raw_image_visible)
 
-        red = np.histogram(data[::2][::2], bins=256, range=[0, max_range])
-        gr1 = np.histogram(data[1::2][::2], bins=256, range=[0, max_range])
-        gr2 = np.histogram(data[::2][1::2], bins=256, range=[0, max_range])
-        assert len(gr1[0]) == len(gr2[0])
-        green = (gr1[0], (gr1[1] + gr2[1]) / 2.0)
-        blue = np.histogram(data[1::2][1::2], bins=256, range=[0, max_range])
+            colors = 'rgb'
+            for n, layer in enumerate((rgb[0], rgb[1], rgb[2])):
 
-        colors = 'rgb'
-        for n, hist in enumerate((red, green, blue)):
-            plt.plot(hist[1][1:], hist[0], colors[n])
+                (mean, median, stddev) = sigma_clipped_stats(layer, sigma=args.sigma)
+                hist = np.histogram(layer[layer >= (mean + args.clipping * stddev)], bins=100)
 
-        plt.title("%s: %.0f/%.0f/%.0f/%.0f" % info)
-        plt.xlabel('intensity')
-        plt.ylabel('log')
-        plt.yscale('log')
-        plt.show()
+                plt.plot(hist[1][1:], hist[0], colors[n])
+
+            plt.title("%s" % filename)
+            plt.xlabel('intensity')
+            plt.ylabel('log')
+            plt.yscale('log')
+            plt.axvline(x=max_range, color='k', linestyle='--')
+            plt.axvline(x=0.75*max_range, color='k', linestyle='-.')
+            plt.show()
 
 
 if __name__ == '__main__':
