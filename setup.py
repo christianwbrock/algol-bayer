@@ -30,7 +30,8 @@ setup(
     install_requires=required,
     entry_points={
         'console_scripts': [
-            'bayer_histogram=bayer.display_histogram:main'
+            'bayer_histogram=bayer.display_histogram:main',
+            'bayerfast=bayer.bayerfast:main'
         ]
     }
 )

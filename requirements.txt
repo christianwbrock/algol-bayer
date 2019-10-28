@@ -1,4 +1,5 @@
 numpy
 rawpy
 astropy
+scipy
 matplotlib
