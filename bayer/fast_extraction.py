@@ -1,3 +1,4 @@
+import math
 import numpy as np
 from astropy.stats import sigma_clipped_stats
 
@@ -30,6 +31,7 @@ class Fast:
         self._de_rotation_angles_rad = None
         self._de_rotated_rgb = None
         self._clipped_de_rotated_rgb = None
+        self._background = None
 
     @property
     def rgb(self):
@@ -41,23 +43,39 @@ class Fast:
     @property
     def clipped_rgb(self):
         if self._clipped is None:
-            self._clipped = self._sigma_clip_image(self.rgb, self.sigma)
-
+            mean, median, stddev = self.background
+            self._clipped = self._sigma_clip_image(self.rgb, mean + stddev * self.sigma)
         return self._clipped
 
+    @property
+    def background(self):
+        if self._background is None:
+            self._background = sigma_clipped_stats(self.rgb, sigma=self.sigma, cenfunc='mean', axis=(1,2))
+
+        return self._background
+
+    @property
+    def background_mean(self):
+        return self.background[0]
+
+    @property
+    def background_median(self):
+        return self.background[1]
+
+    @property
+    def background_stddev(self):
+        return self.background[2]
+
     @classmethod
-    def _sigma_clip_image(cls, image, sigma):
-        if sigma is None:
-            return image
+    def _sigma_clip_image(cls, image, threshold):
 
         clipped = np.ma.array(image, fill_value=np.nan)
         clipped[np.isnan(clipped)] = np.ma.masked
         clipped[np.isinf(clipped)] = np.ma.masked
-        for i in range(clipped.shape[0]):
-            (mean, median, stddev) = sigma_clipped_stats(clipped[i], sigma=sigma, cenfunc='mean')
 
-            with np.errstate(invalid='ignore'):
-                clipped.mask[i] |= clipped[i] < (mean + stddev * sigma)
+        with np.errstate(invalid='ignore'):
+            clipped.mask |= clipped < np.reshape(threshold, (image.shape[0], 1, 1))
+
         return clipped
 
     @property
@@ -93,7 +111,8 @@ class Fast:
         assert image.ndim == 2
 
         # 1nd binarize image
-        binary = image >= np.mean(image)
+        mean = np.mean(image)
+        binary = image >= mean
 
         # 2rd create index array where binary > 0
         [indices_y, indices_x] = np.indices(binary.shape)
@@ -109,6 +128,12 @@ class Fast:
         yx = yx - np.mean(yx, axis=(0))
         u, s, v = np.linalg.svd(yx)
         rot_svd = np.arctan2(v[0,0], v[0,1])
+
+        while rot_svd > math.pi / 2:
+            rot_svd -= math.pi
+
+        while rot_svd < -math.pi / 2:
+            rot_svd += math.pi
 
         return rot_svd
 
