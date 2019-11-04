@@ -7,6 +7,10 @@ def bayer_to_rgb(bayer):
     return np.array((bayer[::2, ::2], (bayer[1::2, ::2] + bayer[::2, 1::2]) / 2, bayer[1::2, 1::2]))
 
 
+def bayer_to_rgbg(bayer):
+    return np.array((bayer[::2, ::2], bayer[::2, 1::2], bayer[1::2, ::2], bayer[1::2, 1::2]))
+
+
 def multi_glob(filenames):
     result = []
     for pattern in filenames:
