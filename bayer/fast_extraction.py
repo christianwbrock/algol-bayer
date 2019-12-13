@@ -1,5 +1,7 @@
 import math
 import numpy as np
+import functools
+
 from astropy.stats import sigma_clipped_stats
 
 from bayer.utils import bayer_to_rgb
@@ -28,33 +30,21 @@ class Fast:
         self._rgb = layers
         self.sigma = sigma
 
-        # everything else is calculated lazily
-        self._clipped = None
-        self._de_rotation_angles_rad = None
-        self._de_rotated_rgb = None
-        self._clipped_de_rotated_rgb = None
-        self._background = None
-
     @property
+    @functools.lru_cache(maxsize=None)
     def rgb(self):
-        if self._rgb is None:
-            self._rgb = bayer_to_rgb(self.bayer, self.raw_color_desc, self.raw_color_pattern)
-
-        return self._rgb
+        return self._rgb if self._rgb else bayer_to_rgb(self.bayer)
 
     @property
+    @functools.lru_cache(maxsize=None)
     def clipped_rgb(self):
-        if self._clipped is None:
-            mean, median, stddev = self.background
-            self._clipped = self._sigma_clip_image(self.rgb, mean + stddev * self.sigma)
-        return self._clipped
+        mean, median, stddev = self.background
+        return self._sigma_clip_image(self.rgb, mean + stddev * self.sigma)
 
     @property
+    @functools.lru_cache(maxsize=None)
     def background(self):
-        if self._background is None:
-            self._background = sigma_clipped_stats(self.rgb, sigma=self.sigma, cenfunc='mean', axis=(1,2))
-
-        return self._background
+        return sigma_clipped_stats(self.rgb, sigma=self.sigma, cenfunc='mean', axis=(1, 2))
 
     @property
     def background_mean(self):
@@ -76,7 +66,7 @@ class Fast:
         clipped[np.isinf(clipped)] = np.ma.masked
 
         with np.errstate(invalid='ignore'):
-            clipped.mask |= clipped < np.reshape(threshold, (image.shape[0], 1, 1))
+            clipped.mask |= clipped < np.reshape(threshold, (np.shape(image)[0], 1, 1))
 
         return clipped
 
@@ -85,28 +75,22 @@ class Fast:
         return np.rad2deg(self.de_rotation_angles_rad)
 
     @property
+    @functools.lru_cache(maxsize=None)
     def de_rotation_angles_rad(self):
-        if self._de_rotation_angles_rad is None:
-            self._de_rotation_angles_rad = np.array([self._calculate_de_rotation_angle(layer) for layer in self.clipped_rgb])
-
-        return self._de_rotation_angles_rad
+        return np.array([self._calculate_de_rotation_angle(layer) for layer in self.clipped_rgb])
 
     @property
+    @functools.lru_cache(maxsize=None)
     def de_rotated_rgb(self):
-        if self._de_rotated_rgb is None:
-            from scipy.ndimage.interpolation import rotate
+        from scipy.ndimage.interpolation import rotate
 
-            angle_deg = np.mean(self.de_rotation_angles_deg)
-            self._de_rotated_rgb = rotate(self.rgb, angle_deg, axes=(1, 2), mode='constant', cval=np.nan)
-
-        return self._de_rotated_rgb
+        angle_deg = np.mean(self.de_rotation_angles_deg)
+        return rotate(self.rgb, angle_deg, axes=(1, 2), mode='constant', cval=np.nan)
 
     @property
+    @functools.lru_cache(maxsize=None)
     def clipped_de_rotated_rgb(self):
-        if self._clipped_de_rotated_rgb is None:
-            self._clipped_de_rotated_rgb = self._sigma_clip_image(self.de_rotated_rgb, self.sigma)
-
-        return self._clipped_de_rotated_rgb
+        return self._sigma_clip_image(self.de_rotated_rgb, self.sigma)
 
     @classmethod
     def _calculate_de_rotation_angle(cls, image):
@@ -130,10 +114,9 @@ class Fast:
         yx = np.moveaxis(np.array((y, x)), 0, 1)
 
         # 3th get rotation angle from svd
-        yx = yx - np.mean(yx, axis=(0))
-        yx = yx.T.dot(yx)
-        u, s, v = np.linalg.svd(yx)
-        rot_svd = np.arctan2(v[0,0], v[0,1])
+        yx = yx - np.mean(yx, axis=(0,))
+        u, s, v = np.linalg.svd(yx, full_matrices=False)
+        rot_svd = np.arctan2(v[0, 0], v[0, 1])
 
         while rot_svd > math.pi / 2:
             rot_svd -= math.pi
