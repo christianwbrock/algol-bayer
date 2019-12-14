@@ -37,7 +37,7 @@ def main():
 
         with rawpy.imread(filename) as raw:
 
-            extractor = Fast(raw.raw_image_visible, sigma=args.sigma)
+            extractor = Fast(raw, sigma=args.sigma)
             # _plot_file(filename, extractor.clipped_de_rotated_rgb)
             _plot_file(filename, extractor, args.cut)
 

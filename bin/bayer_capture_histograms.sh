@@ -7,7 +7,7 @@ MAX=$2
 if [ x$MIN = x -o x$MAX = x ]; then
 	echo usage: $PROG min-exp-time-s max-exp-time-s
 	echo
-	echo "       Create and display histograms by doubling the exposure times"
+	echo "       Capture images and display histograms by doubling the exposure times"
 	echo "       between min and max exposure time."
 	echo "       Example: $PROG 30 240 will create histograms for exposures"
 	echo "                of 30, 60, 120 and 240 seconds."
@@ -19,7 +19,7 @@ fi
 
 function display_hist()
 {
-	display_histogram $1
+	bayer_display_histogram $1
 }
 
 gphoto2 --set-config eosviewfinder=1

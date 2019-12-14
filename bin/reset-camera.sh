@@ -2,6 +2,7 @@
 
 function test_camera()
 {
+	# we expect a header and a line for each camera
 	test 2 = $(gphoto2 --auto-detect | wc -l) && echo No camera found && exit 1
 }
 

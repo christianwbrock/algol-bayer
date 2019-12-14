@@ -13,8 +13,8 @@ with open(path.join(here, 'requirements.txt'), encoding='utf-8') as f:
 
 
 setup(
-    name='bayer',
-    version='1.0.0a1',
+    name='algol-bayer',
+    version='1.0.0a2',
     description='bayer-masked image reduction package',
     long_description=long_description,
     author='Christian W. Brock',
@@ -28,10 +28,19 @@ setup(
     ],
     packages=find_packages(),
     install_requires=required,
+    setup_requires=[
+        'wheel',
+        'twine'
+    ],
     entry_points={
         'console_scripts': [
-            'bayer_histogram=bayer.display_histogram:main',
-            'bayerfast=bayer.bayerfast:main'
+            'bayer_display_histogram=bayer.display_histogram:main',
+            'bayer_display_spectrum=bayer.bayerfast:main'
         ]
-    }
+    },
+    scripts=[
+        'bin/bayer_capture_sequence.sh',
+        'bin/bayer_capture_histograms.sh',
+        'bin/reset-camera.sh'
+    ]
 )

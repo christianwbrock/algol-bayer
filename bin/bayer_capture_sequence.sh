@@ -8,13 +8,11 @@ TIME=$3
 if [ x$OBJ = x -o x$TIME = x -o x$COUNT = x ]; then
 	echo usage: $PROG object image-count exp-time-s
 	echo
-	echo "       Capture and image sequence and store them as raw images."
+	echo "       Capture an image sequence, store them as raw images and"
+	echo "       try to display them as spectra."
 	echo ""
 	echo "       Example: $PROG zetori 20 1800 will capture 20 halve hour exposures"
 	echo "                zetori_1800_00.cr2, zetori_1800_01.cr2, ..."
-	echo ""
-	echo "       You can use ImageMagicks convert to get another format such as fit:"
-	echo "       for i in zetuma*cr2; do convert \$i \$(basename \$i .cr2).fits; done"
 	echo ""
 	exit 1
 fi
@@ -25,7 +23,7 @@ gphoto2 --set-config eosviewfinder=1
 
 function preview()
 {
-	fast_extraction $1
+	bayer_display_spectrum $1
 }
 
 

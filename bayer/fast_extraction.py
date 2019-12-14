@@ -7,7 +7,7 @@ from bayer.utils import bayer_to_rgb
 
 class Fast:
 
-    def __init__(self, bayer=None, layers=None, sigma=10):
+    def __init__(self, raw=None, layers=None, sigma=10):
         """
         :param bayer: None or a two-dimensional bayer matrix assumed to be RGBG
         :param layers: None or a three-dimensional stack of images -- the first index is the image number
@@ -16,13 +16,15 @@ class Fast:
         Either bayer or layers has to be defined
         """
 
-        if bayer is None and layers is None or bayer is not None and layers is not None:
+        if raw is None and layers is None or raw is not None and layers is not None:
             raise ValueError('either bayer or rgb must be not None')
 
-        assert bayer is None or np.asarray(bayer).ndim == 2
+        assert raw.raw_image_visible is None or np.asarray(raw.raw_image_visible).ndim == 2
         assert layers is None or np.asarray(layers).ndim == 3
 
-        self.bayer = bayer
+        self.bayer = raw.raw_image_visible
+        self.raw_color_desc = raw.color_desc
+        self.raw_color_pattern = np.ravel(raw.raw_pattern)
         self._rgb = layers
         self.sigma = sigma
 
@@ -36,7 +38,7 @@ class Fast:
     @property
     def rgb(self):
         if self._rgb is None:
-            self._rgb = bayer_to_rgb(self.bayer)
+            self._rgb = bayer_to_rgb(self.bayer, self.raw_color_desc, self.raw_color_pattern)
 
         return self._rgb
 
@@ -112,6 +114,9 @@ class Fast:
 
         # 1nd binarize image
         mean = np.mean(image)
+        if mean == np.ma.masked:
+            raise ValueError('mean does not exist -- check the image and evtl. try a lower sigma')
+
         binary = image >= mean
 
         # 2rd create index array where binary > 0
@@ -126,6 +131,7 @@ class Fast:
 
         # 3th get rotation angle from svd
         yx = yx - np.mean(yx, axis=(0))
+        yx = yx.T.dot(yx)
         u, s, v = np.linalg.svd(yx)
         rot_svd = np.arctan2(v[0,0], v[0,1])
 
