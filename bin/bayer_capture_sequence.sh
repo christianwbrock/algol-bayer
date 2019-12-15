@@ -23,7 +23,7 @@ gphoto2 --set-config eosviewfinder=1
 
 function preview()
 {
-	bayer_display_spectrum $1
+	bayer_display_spectrum --dont-cut $1
 }
 
 
@@ -31,6 +31,5 @@ for (( i=0; i < $COUNT; ++i)); do
 	printf -v image "%s_%s_%02d.cr2" $OBJ $TIME $i
 	echo $(($i+1))/$COUNT capture and download $image
 	gphoto2 --quiet -B $TIME --filename $image --capture-image-and-download && \
-	( preview x$i.cr2 & )
+	( preview $image & )
 done
-

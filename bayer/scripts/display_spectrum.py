@@ -4,7 +4,7 @@
 import logging
 import warnings
 from argparse import ArgumentParser
-from os.path import basename
+import os.path
 
 import math
 import matplotlib.pyplot as plt
@@ -13,7 +13,7 @@ import rawpy
 from astropy.stats import sigma_clipped_stats
 
 from bayer.fast_extraction import Fast
-from bayer.utils import multi_glob
+from bayer.utils import rawpy_to_rgb, multi_glob
 
 max_range = 3651
 border_y = 20
@@ -23,8 +23,9 @@ def main():
     warnings.simplefilter("ignore")
 
     parser = ArgumentParser(description='Display spectrum from a bayer matrix')
-    parser.add_argument('filenames', nargs='+', help='one or more raw files containing bayer matrices')
-    parser.add_argument('--sigma', '-s', default=10.0, type=float, help='sigma used for clipping')
+    parser.add_argument('filename', nargs='+', help='one or more raw files containing bayer matrices')
+    parser.add_argument('--sigma', '-s', default=3.0, help='sigma used for clipping')
+    parser.add_argument('--clipping', default=10.0, help='clip background at mean + clipping * stddev')
     cut_group = parser.add_mutually_exclusive_group()
     cut_group.add_argument('--cut', '-c', dest='cut', default=True, action='store_true', help='cut spectrum in dispersion direction (the default)')
     cut_group.add_argument('--dont-cut', '-C', dest='cut', action='store_false', help='do not cut spectrum in dispersion direction')
@@ -33,12 +34,11 @@ def main():
 
     logging.basicConfig(level=logging.INFO)
 
-    for filename in multi_glob(args.filenames):
+    for filename in multi_glob(args.filename):
 
         with rawpy.imread(filename) as raw:
 
-            extractor = Fast(raw, sigma=args.sigma)
-            # _plot_file(filename, extractor.clipped_de_rotated_rgb)
+            extractor = Fast(layers=rawpy_to_rgb(raw), sigma=args.sigma)
             _plot_file(filename, extractor, args.cut)
 
 
@@ -69,7 +69,7 @@ def _plot_file(filename, extractor, cut):
             logging.warning('variance < 0?')
             variance = -variance
 
-        return (average, math.sqrt(variance))
+        return average, math.sqrt(variance)
 
     moments_y_avg = weighted_avg_and_std(y_indices, y_values)
 
@@ -102,35 +102,37 @@ def _plot_file(filename, extractor, cut):
 
     xrange = (0, size_x)
 
-    plot = plt.subplot2grid((12, 1), (0, 0), rowspan=10)
-    plt.title(basename(filename))
+    fig = plt.figure()
+    fig.canvas.set_window_title(os.path.basename(filename))
+    ax = plt.subplot2grid((12, 1), (0, 0), rowspan=10)
 
     colors = 'rgbk'
     for n, layer in enumerate((rgb[0], rgb[1], rgb[2], rgb[0] + rgb[1] + rgb[2])):
         # spec = np.sum(layer, axis=0)  / np.sum(np.isfinite(layer), axis=0)
         spec = np.nanmax(layer, axis=0)
-        plot.plot(range(*spec.shape), spec, colors[n])
-        plot.set_xlim(xrange)
-        plot.get_xaxis().set_visible(False)
+        ax.plot(range(*spec.shape), spec, colors[n])
+        ax.set_xlim(xrange)
+        ax.get_xaxis().set_visible(False)
 
     plt.axhline(y=max_range, color='k', linestyle='--')
     plt.axhline(y=0.75*max_range, color='k', linestyle='-.')
 
-    plot = plt.subplot2grid((12, 1), (10, 0))
-    plot.imshow(_reshape(rgb, scale=False), aspect='auto')
-    plot.set_xlim(xrange)
-    plot.get_xaxis().set_visible(False)
-    plot.get_yaxis().set_visible(False)
+    ax = plt.subplot2grid((12, 1), (10, 0))
+    ax.imshow(_reshape(rgb, scale=False), aspect='auto')
+    ax.set_xlim(xrange)
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
 
-    plot = plt.subplot2grid((12, 1), (11, 0))
-    plot.imshow(_reshape(rgb, scale=True), aspect='auto')
-    plot.set_xlim(xrange)
-    plot.get_xaxis().set_visible(False)
-    plot.get_yaxis().set_visible(False)
+    ax = plt.subplot2grid((12, 1), (11, 0))
+    ax.imshow(_reshape(rgb, scale=True), aspect='auto')
+    ax.set_xlim(xrange)
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
 
-    plt.tight_layout(h_pad=0)
+    fig.tight_layout()
 
     plt.show()
+    plt.close(fig)
 
 
 def _reshape(data, scale=False):

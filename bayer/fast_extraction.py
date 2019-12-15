@@ -5,12 +5,12 @@ import functools
 
 from astropy.stats import sigma_clipped_stats
 
-from bayer.utils import bayer_to_rgb
+from bayer.utils import rawpy_to_rgb
 
 
 class Fast:
 
-    def __init__(self, raw=None, layers=None, sigma=10):
+    def __init__(self, layers=None, sigma=3, clipping=10):
         """
         :param bayer: None or a two-dimensional bayer matrix assumed to be RGBG
         :param layers: None or a three-dimensional stack of images -- the first index is the image number
@@ -19,45 +19,39 @@ class Fast:
         Either bayer or layers has to be defined
         """
 
-        if raw is None and layers is None or raw is not None and layers is not None:
-            raise ValueError('either bayer or rgb must be not None')
-
-        assert raw.raw_image_visible is None or np.asarray(raw.raw_image_visible).ndim == 2
         assert layers is None or np.asarray(layers).ndim == 3
 
-        self.bayer = raw.raw_image_visible
-        self.raw_color_desc = raw.color_desc
-        self.raw_color_pattern = np.ravel(raw.raw_pattern)
         self._rgb = layers
         self.sigma = sigma
+        self.clipping = clipping
 
     @property
     @functools.lru_cache(maxsize=None)
     def rgb(self):
-        return self._rgb if self._rgb else bayer_to_rgb(self.bayer)
+        return self._rgb
 
     @property
     @functools.lru_cache(maxsize=None)
     def clipped_rgb(self):
-        mean, median, stddev = self.background
-        return self._sigma_clip_image(self.rgb, mean + stddev * self.sigma)
+        mean, median, stddev = self._background
+        return self._sigma_clip_image(self.rgb, mean + stddev * self.clipping)
 
     @property
     @functools.lru_cache(maxsize=None)
-    def background(self):
+    def _background(self):
         return sigma_clipped_stats(self.rgb, sigma=self.sigma, cenfunc='mean', axis=(1, 2))
 
     @property
     def background_mean(self):
-        return self.background[0]
+        return self._background[0]
 
     @property
     def background_median(self):
-        return self.background[1]
+        return self._background[1]
 
     @property
     def background_stddev(self):
-        return self.background[2]
+        return self._background[2]
 
     @classmethod
     def _sigma_clip_image(cls, image, threshold):
