@@ -85,7 +85,8 @@ class Fast:
     @property
     @functools.lru_cache(maxsize=None)
     def clipped_de_rotated_rgb(self):
-        return self._sigma_clip_image(self.de_rotated_rgb, self.sigma)
+        mean, median, stddev = self._background
+        return self._sigma_clip_image(self.de_rotated_rgb, mean + stddev * self.clipping)
 
     @classmethod
     def _calculate_de_rotation_angle(cls, image):

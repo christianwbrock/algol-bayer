@@ -2,7 +2,7 @@ import os
 import sys
 import pytest
 
-from bayer.scripts import display_histogram, display_spectrum
+from bayer.scripts import display_histogram, display_spectrum, show_rgb_layers
 
 
 def get_filenames():
@@ -48,6 +48,22 @@ def test_help_spectrum():
     with pytest.raises(SystemExit, match='0'):
         sys.argv = ['dummy', '--help']
         display_spectrum.main()
+
+
+def test_display_contour():
+
+    for filename in get_filenames():
+        if not os.path.exists(filename):
+            continue
+        sys.argv = ['dummy', filename]
+        show_rgb_layers.main()
+
+
+def test_help_contour():
+
+    with pytest.raises(SystemExit, match='0'):
+        sys.argv = ['dummy', '--help']
+        show_rgb_layers.main()
 
 
 def _find(target):
