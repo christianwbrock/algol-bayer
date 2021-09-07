@@ -6,8 +6,8 @@ import numpy as np
 import rawpy
 from matplotlib import pyplot as plt
 
-from bayer.fast_extraction import Fast
-from bayer.utils import rawpy_to_rgb
+from bayer.extraction import FastExtraction
+from bayer.to_rgb import rawpy_to_rgb
 
 
 def main():
@@ -25,7 +25,7 @@ def main():
         with rawpy.imread(filename) as raw:
             layers = rawpy_to_rgb(raw)
 
-        fast = Fast(layers=layers, sigma=args.sigma, clipping=args.clipping)
+        fast = FastExtraction(rgb_layers=layers, sigma=args.sigma, clipping=args.clipping)
 
         three_sigma = fast.background_mean + fast.background_stddev * 3
         ten_sigma = fast.background_mean + fast.background_stddev * 10

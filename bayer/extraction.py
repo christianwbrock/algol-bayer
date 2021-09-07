@@ -5,63 +5,57 @@ import functools
 
 from astropy.stats import sigma_clipped_stats
 
-from bayer.utils import rawpy_to_rgb
+from bayer.to_rgb import rawpy_to_rgb
 
 
-class Fast:
+class FastExtraction:
 
-    def __init__(self, layers=None, sigma=3, clipping=10):
+    def __init__(self, rgb_layers, sigma=3, clipping=10):
         """
-        :param bayer: None or a two-dimensional bayer matrix assumed to be RGBG
-        :param layers: None or a three-dimensional stack of images -- the first index is the image number
+        :param rgb_layers: None or a three-dimensional stack of images -- the first index is the image number
         :param sigma: None or used for sigma clipping of the image background
 
         Either bayer or layers has to be defined
         """
 
-        assert layers is None or np.asarray(layers).ndim == 3
+        assert rgb_layers is not None and np.ndim(rgb_layers) == 3
 
-        self._rgb = layers
+        self.rgb = np.asarray(rgb_layers)
         self.sigma = sigma
         self.clipping = clipping
 
     @property
     @functools.lru_cache(maxsize=None)
-    def rgb(self):
-        return self._rgb
-
-    @property
-    @functools.lru_cache(maxsize=None)
     def clipped_rgb(self):
-        mean, median, stddev = self._background
-        return self._sigma_clip_image(self.rgb, mean + stddev * self.clipping)
+        return self._sigma_clip_image(self.rgb, self.background_mean + self.background_stddev * self.clipping)
 
     @property
     @functools.lru_cache(maxsize=None)
-    def _background(self):
+    def _background_stats(self):
         return sigma_clipped_stats(self.rgb, sigma=self.sigma, cenfunc='mean', axis=(1, 2))
 
     @property
     def background_mean(self):
-        return self._background[0]
+        return self._background_stats[0]
 
     @property
     def background_median(self):
-        return self._background[1]
+        return self._background_stats[1]
 
     @property
     def background_stddev(self):
-        return self._background[2]
+        return self._background_stats[2]
 
     @classmethod
     def _sigma_clip_image(cls, image, threshold):
 
-        clipped = np.ma.array(image, fill_value=np.nan)
-        clipped[np.isnan(clipped)] = np.ma.masked
-        clipped[np.isinf(clipped)] = np.ma.masked
+        clipped = np.copy(image)
+        clipped[np.isinf(clipped)] = np.nan
 
-        with np.errstate(invalid='ignore'):
-            clipped.mask |= clipped < np.reshape(threshold, (np.shape(image)[0], 1, 1))
+        n, __, __ = np.shape(image)
+
+        threshold = np.reshape(threshold, (n, 1, 1))
+        clipped[clipped < threshold] = np.nan
 
         return clipped
 
@@ -85,7 +79,7 @@ class Fast:
     @property
     @functools.lru_cache(maxsize=None)
     def clipped_de_rotated_rgb(self):
-        mean, median, stddev = self._background
+        mean, median, stddev = self._background_stats
         return self._sigma_clip_image(self.de_rotated_rgb, mean + stddev * self.clipping)
 
     @classmethod
@@ -93,8 +87,8 @@ class Fast:
         assert image.ndim == 2
 
         # 1nd binarize image
-        mean = np.mean(image)
-        if mean == np.ma.masked:
+        mean = np.nanmean(image)
+        if np.isnan(mean):
             raise ValueError('mean does not exist -- check the image and evtl. try a lower sigma')
 
         binary = image >= mean

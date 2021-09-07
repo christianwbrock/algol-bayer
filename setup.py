@@ -35,7 +35,7 @@ setup(
     entry_points={
         'console_scripts': [
             'bayer_display_histogram=bayer.scripts.display_histogram:main',
-            'bayer_display_spectrum=bayer.scripts.fast_extraction:main',
+            'bayer_display_spectrum=bayer.scripts.display_spectrum:main',
             'bayer_display_rgb=bayer.scripts.show_rgb_layers:main'
         ]
     },

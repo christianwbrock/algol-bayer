@@ -9,7 +9,8 @@ import numpy as np
 import rawpy
 from astropy.stats import sigma_clipped_stats
 
-from bayer.utils import rawpy_to_rgb, multi_glob
+from bayer.to_rgb import rawpy_to_rgb
+from bayer.utils import multi_glob
 
 
 def main():

@@ -2,18 +2,18 @@
 '''
 
 import logging
+import math
+import os.path
 import warnings
 from argparse import ArgumentParser
-import os.path
 
-import math
 import matplotlib.pyplot as plt
 import numpy as np
 import rawpy
-from astropy.stats import sigma_clipped_stats
 
-from bayer.fast_extraction import Fast
-from bayer.utils import rawpy_to_rgb, multi_glob
+from bayer.extraction import FastExtraction
+from bayer.to_rgb import rawpy_to_rgb
+from bayer.utils import multi_glob
 
 max_range = 3651
 border_y = 20
@@ -38,7 +38,7 @@ def main():
 
         with rawpy.imread(filename) as raw:
 
-            extractor = Fast(layers=rawpy_to_rgb(raw), sigma=args.sigma)
+            extractor = FastExtraction(rgb_layers=rawpy_to_rgb(raw), sigma=args.sigma)
             _plot_file(filename, extractor, args.cut)
 
 
@@ -71,10 +71,10 @@ def _plot_file(filename, extractor, cut):
 
         return average, math.sqrt(variance)
 
-    moments_y_avg = weighted_avg_and_std(y_indices, y_values)
+    avg_y, stddev_y = weighted_avg_and_std(y_indices, y_values)
 
-    miny = math.floor(moments_y_avg[0] - moments_y_avg[1])
-    maxy = math.ceil(moments_y_avg[0] + moments_y_avg[1])
+    miny = math.floor(avg_y - stddev_y)
+    maxy = math.ceil(avg_y + stddev_y)
 
     miny = np.max((0, miny))
     maxy = np.min((maxy, size_y - 1))
@@ -105,17 +105,19 @@ def _plot_file(filename, extractor, cut):
     fig = plt.figure()
     fig.canvas.set_window_title(os.path.basename(filename))
     ax = plt.subplot2grid((12, 1), (0, 0), rowspan=10)
+    ax.set_xlim(xrange)
+    ax.get_xaxis().set_visible(False)
 
     colors = 'rgbk'
     for n, layer in enumerate((rgb[0], rgb[1], rgb[2], rgb[0] + rgb[1] + rgb[2])):
         # spec = np.sum(layer, axis=0)  / np.sum(np.isfinite(layer), axis=0)
         spec = np.nanmax(layer, axis=0)
         ax.plot(range(*spec.shape), spec, colors[n])
-        ax.set_xlim(xrange)
-        ax.get_xaxis().set_visible(False)
 
-    plt.axhline(y=max_range, color='k', linestyle='--')
-    plt.axhline(y=0.75*max_range, color='k', linestyle='-.')
+    ax.axhline(y=max_range, color='k', linestyle='--')
+    ax.axhline(y=0.75*max_range, color='k', linestyle='-.')
+    # plt.axhline(y=max_range, color='k', linestyle='--')
+    # plt.axhline(y=0.75*max_range, color='k', linestyle='-.')
 
     ax = plt.subplot2grid((12, 1), (10, 0))
     ax.imshow(_reshape(rgb, scale=False), aspect='auto')
