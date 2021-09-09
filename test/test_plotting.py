@@ -5,14 +5,25 @@ import pytest
 from bayer.scripts import display_histogram, display_spectrum, show_rgb_layers
 
 
-def get_filenames():
+def _get_raw_filenames():
 
     datadir = _find('data')
 
     filenames = [
-        '2015-02-20-betori/orig/IMG_2375.CR2',
-        '2015-02-19-alpori/orig/IMG_2236.CR2',
-        '2014-03-12-winter6/orig/DSC_0828_Sirius.NEF'
+        'betori.CR2',
+        'alpori.CR2',
+        'alpcma.NEF'
+    ]
+
+    return [os.path.join(datadir, fn) for fn in filenames]
+
+
+def _get_fits_filenames():
+
+    datadir = _find('data')
+
+    filenames = [
+        'alpleo.FIT',
     ]
 
     return [os.path.join(datadir, fn) for fn in filenames]
@@ -20,7 +31,7 @@ def get_filenames():
 
 def test_display_histogram():
 
-    for filename in get_filenames():
+    for filename in _get_raw_filenames():
         if not os.path.exists(filename):
             continue
         sys.argv = ['dummy', filename]
@@ -34,25 +45,34 @@ def test_help_histogram():
         display_histogram.main()
 
 
-def test_display_spectrum():
+def test_display_raw_spectrum():
 
-    for filename in get_filenames():
+    for filename in _get_raw_filenames():
         if not os.path.exists(filename):
             continue
         sys.argv = ['dummy', filename]
-        display_spectrum.main()
+        display_spectrum.main_raw()
+
+
+def test_display_fits_spectrum():
+
+    for filename in _get_fits_filenames():
+        if not os.path.exists(filename):
+            continue
+        sys.argv = ['dummy', filename]
+        display_spectrum.main_fits()
 
 
 def test_help_spectrum():
 
     with pytest.raises(SystemExit, match='0'):
         sys.argv = ['dummy', '--help']
-        display_spectrum.main()
+        display_spectrum.main_raw()
 
 
 def test_display_contour():
 
-    for filename in get_filenames():
+    for filename in _get_raw_filenames():
         if not os.path.exists(filename):
             continue
         sys.argv = ['dummy', filename]

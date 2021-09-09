@@ -31,16 +31,16 @@ def main():
             rgb = rawpy_to_rgb(raw)
 
         fig = plt.figure()
-        fig.canvas.set_window_title(os.path.basename(filename))
+        fig.canvas.manager.set_window_title(os.path.basename(filename))
         ax = fig.add_subplot()
 
         colors = 'rgb'
-        for n, layer in enumerate((rgb[0], rgb[1], rgb[2])):
+        for color, layer in zip(colors, (rgb[0], rgb[1], rgb[2])):
 
             (mean, median, stddev) = sigma_clipped_stats(layer, sigma=args.sigma)
             hist = np.histogram(layer[layer >= (mean + args.clipping * stddev)], bins=100)
 
-            ax.plot(hist[1][1:], hist[0], colors[n])
+            ax.plot(hist[1][1:], hist[0], color)
 
         ax.set_xlabel('intensity')
         ax.set_ylabel('pixel count')

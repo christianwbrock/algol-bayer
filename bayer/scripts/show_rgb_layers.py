@@ -25,11 +25,11 @@ def main():
         with rawpy.imread(filename) as raw:
             layers = rawpy_to_rgb(raw)
 
-        fast = FastExtraction(rgb_layers=layers, sigma=args.sigma, clipping=args.clipping)
+        fast = FastExtraction(image_layers=layers, sigma=args.sigma, clipping=args.clipping)
 
         three_sigma = fast.background_mean + fast.background_stddev * 3
         ten_sigma = fast.background_mean + fast.background_stddev * 10
-        threshold = np.nanmean(fast.clipped_rgb, axis=(1, 2))
+        threshold = np.nanmean(fast.clipped_layers, axis=(1, 2))
 
         levels = np.array([three_sigma, ten_sigma, threshold]).T
         contour_colors = 'green red blue'.split()
@@ -39,14 +39,14 @@ def main():
                    f'${b:.0f} = {args.clipping} \\sigma$',
                    f'${c:.0f} = mean > {args.clipping} \\sigma$'] for a, b, c in levels]
 
-        layer_count, row_count, column_count = fast.rgb.shape
+        layer_count, row_count, column_count = fast.layers.shape
 
         fig = plt.figure(figsize=(6, 12))
 
         for idx_layer in range(layer_count):
             ax = fig.add_subplot(layer_count, 1, idx_layer + 1)
-            ax.imshow(fast.rgb[idx_layer], cmap=matplotlib.cm.gray)
-            cs = ax.contour(np.arange(column_count), np.arange(row_count), fast.rgb[idx_layer],
+            ax.imshow(fast.layers[idx_layer], cmap=matplotlib.cm.gray)
+            cs = ax.contour(np.arange(column_count), np.arange(row_count), fast.layers[idx_layer],
                             levels=levels[idx_layer], colors=contour_colors)
             for idx_label in range(len(labels[idx_layer])):
                 label = labels[idx_layer][idx_label]
@@ -55,7 +55,7 @@ def main():
             ax.set_title(layer_colors[idx_layer])
             ax.legend()
 
-        fig.canvas.set_window_title(os.path.basename(filename))
+        fig.canvas.manager.set_window_title(os.path.basename(filename))
         fig.tight_layout()
         plt.show()
         plt.close(fig)

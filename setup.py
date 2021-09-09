@@ -14,7 +14,7 @@ with open(path.join(here, 'requirements.txt'), encoding='utf-8') as f:
 
 setup(
     name='algol-bayer',
-    version='1.0.0a2',
+    version='1.0.0a3',
     description='bayer-masked image reduction package',
     long_description=long_description,
     author='Christian W. Brock',
@@ -35,7 +35,8 @@ setup(
     entry_points={
         'console_scripts': [
             'bayer_display_histogram=bayer.scripts.display_histogram:main',
-            'bayer_display_spectrum=bayer.scripts.display_spectrum:main',
+            'bayer_display_spectrum=bayer.scripts.display_spectrum:main_raw',
+            'fits_display_spectrum=bayer.scripts.display_spectrum:main_fits',
             'bayer_display_rgb=bayer.scripts.show_rgb_layers:main'
         ]
     },
