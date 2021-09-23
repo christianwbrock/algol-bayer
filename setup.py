@@ -37,7 +37,7 @@ setup(
             'bayer_display_histogram=bayer.scripts.display_histogram:main',
             'bayer_display_spectrum=bayer.scripts.display_spectrum:main_raw',
             'fits_display_spectrum=bayer.scripts.display_spectrum:main_fits',
-            'bayer_display_rgb=bayer.scripts.show_rgb_layers:main'
+            'bayer_display_rgb=bayer.scripts.visualize_segmentation:main'
         ]
     },
     scripts=[

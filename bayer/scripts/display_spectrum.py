@@ -3,7 +3,6 @@ Use image center-of-mass to extract spectra fast-and-dirty
 """
 
 import logging
-import math
 import os.path
 from argparse import ArgumentParser
 
@@ -13,6 +12,7 @@ import numpy as np
 from bayer.extraction import FastExtraction
 from bayer.to_rgb import rawpy_to_rgb
 from bayer.utils import multi_glob
+from extraction import find_slit_in_images, find_spectra_in_layers
 
 
 def main_raw():
@@ -67,10 +67,10 @@ def _plot_file(filename, extractor, white_level, cut_spectra):
     rgb = extractor.de_rotated_layers
     num_colors, size_y, size_x = rgb.shape
 
-    miny, maxy = _find_slit_in_images(rgb, extractor.background_mean)
+    miny, maxy = find_slit_in_images(rgb, extractor.background_mean)
 
     if cut_spectra:
-        minx, maxx = _find_spectra_in_images(rgb, extractor.background_mean)
+        minx, maxx = find_spectra_in_layers(rgb, extractor.background_mean)
     else:
         minx, maxx = 0, size_x - 1
 
@@ -118,75 +118,10 @@ def _plot_file(filename, extractor, white_level, cut_spectra):
     ax.get_xaxis().set_visible(False)
     ax.get_yaxis().set_visible(False)
 
-    fig.tight_layout()
+    fig.tight_layout(pad=0.5, h_pad=0.2, w_pad=0.2)
 
     plt.show()
     plt.close(fig)
-
-
-def _find_slit_in_images(rgb, background_mean):
-
-    __, size_y, __ = rgb.shape
-    wo_background = rgb - np.reshape(background_mean, (-1, 1, 1))
-
-    slit_function = np.nanmean(wo_background, axis=(0, 2))
-    slit_center, slit_size = _center_of_gravity(slit_function)
-
-    miny = math.floor(slit_center - slit_size)
-    maxy = math.ceil(slit_center + slit_size)
-
-    miny = np.clip(miny, 0, size_y - 1)
-    maxy = np.clip(maxy, 0, size_y - 1)
-
-    return miny, maxy
-
-
-def _find_spectra_in_images(rgb, background_mean):
-
-    __, __, size_x = rgb.shape
-    wo_background = rgb - np.reshape(background_mean, (-1, 1, 1))
-
-    spectra = np.nanmean(wo_background, axis=1)
-
-    spectrum_locations, spectrum_widths = _center_of_gravity(spectra)
-
-    left_most_spectrum = np.argmin(spectrum_locations)
-    right_most_spectrum = np.argmax(spectrum_locations)
-
-    minx = math.floor(spectrum_locations[left_most_spectrum] - spectrum_widths[left_most_spectrum])
-    maxx = math.ceil(spectrum_locations[right_most_spectrum] + spectrum_widths[right_most_spectrum])
-
-    minx = np.clip(minx, 0, size_x - 1)
-    maxx = np.clip(maxx, 0, size_x - 1)
-
-    return minx, maxx
-
-
-def _center_of_gravity(data):
-    """\
-    Return the weighted average and standard deviation.
-    """
-
-    if data.ndim > 1:
-        result = [_center_of_gravity(data[i]) for i in range(data.shape[0])]
-        result = np.transpose(result)
-        return result[0], result[1]
-
-    assert data.ndim == 1
-    valid_indices = np.isfinite(data)
-
-    indices = np.arange(data.shape[-1])
-    indices = indices[valid_indices]
-    data = data[valid_indices]
-
-    average = np.average(indices, weights=data)
-    # Fast and numerically precise:
-    variance = np.average((indices - average) ** 2, weights=data)
-    if variance < 0:
-        logging.warning('variance < 0?')
-        variance = -variance
-
-    return average, math.sqrt(variance)
 
 
 def _reshape_and_scale_image(data, max_camera_white_level, scale=False):

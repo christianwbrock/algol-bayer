@@ -2,7 +2,7 @@ import os
 import sys
 import pytest
 
-from bayer.scripts import display_histogram, display_spectrum, show_rgb_layers
+from bayer.scripts import display_histogram, display_spectrum, visualize_segmentation
 
 
 def _get_raw_filenames():
@@ -29,13 +29,22 @@ def _get_fits_filenames():
     return [os.path.join(datadir, fn) for fn in filenames]
 
 
-def test_display_histogram():
+def test_display_raw_histogram():
 
     for filename in _get_raw_filenames():
         if not os.path.exists(filename):
             continue
         sys.argv = ['dummy', filename]
         display_histogram.main()
+
+
+def test_display_fits_histogram():
+
+    for filename in _get_fits_filenames():
+        if not os.path.exists(filename):
+            continue
+        sys.argv = ['dummy', filename]
+        display_histogram.main_fits()
 
 
 def test_help_histogram():
@@ -70,20 +79,29 @@ def test_help_spectrum():
         display_spectrum.main_raw()
 
 
-def test_display_contour():
+def test_display_raw_contour():
 
     for filename in _get_raw_filenames():
         if not os.path.exists(filename):
             continue
         sys.argv = ['dummy', filename]
-        show_rgb_layers.main()
+        visualize_segmentation.main_raw()
+
+
+def test_display_fits_contour():
+
+    for filename in _get_fits_filenames():
+        if not os.path.exists(filename):
+            continue
+        sys.argv = ['dummy', filename]
+        visualize_segmentation.main_fits()
 
 
 def test_help_contour():
 
     with pytest.raises(SystemExit, match='0'):
         sys.argv = ['dummy', '--help']
-        show_rgb_layers.main()
+        visualize_segmentation.main_raw()
 
 
 def _find(target):

@@ -1,4 +1,5 @@
 import functools
+import logging
 import math
 import numpy as np
 import functools
@@ -118,3 +119,73 @@ class FastExtraction:
             angle += math.pi
 
         return angle
+
+
+def find_slit_in_images(rgb, background_mean, scale=1.0):
+
+    __, size_y, __ = rgb.shape
+    wo_background = rgb - np.reshape(background_mean, (-1, 1, 1))
+
+    slit_function = np.nanmean(wo_background, axis=(0, 2))
+    slit_center, slit_size = _center_of_gravity(slit_function)
+
+    miny = math.floor(slit_center - scale * slit_size)
+    maxy = math.ceil(slit_center + scale * slit_size)
+
+    miny = np.clip(miny, 0, size_y - 1)
+    maxy = np.clip(maxy, 0, size_y - 1)
+
+    return miny, maxy
+
+
+def find_spectra_in_layers(rgb, background_mean, scale=1.5):
+
+    __, __, size_x = rgb.shape
+    wo_background = rgb - np.reshape(background_mean, (-1, 1, 1))
+
+    spectra = np.nanmean(wo_background, axis=1)
+
+    spectrum_locations, spectrum_widths = _center_of_gravity(spectra)
+
+    left_most_spectrum = np.argmin(spectrum_locations)
+    right_most_spectrum = np.argmax(spectrum_locations)
+
+    minx = math.floor(spectrum_locations[left_most_spectrum] - scale * spectrum_widths[left_most_spectrum])
+    maxx = math.ceil(spectrum_locations[right_most_spectrum] + scale * spectrum_widths[right_most_spectrum])
+
+    minx = np.clip(minx, 0, size_x - 1)
+    maxx = np.clip(maxx, 0, size_x - 1)
+
+    return minx, maxx
+
+
+def _center_of_gravity(data):
+    """\
+    Return the weighted mean and standard deviation using moments.
+
+    Mean is the first raw moment while variance is the second central moment of he data.
+    For more details have a look at https://en.wikipedia.org/wiki/Moment_(mathematics) or
+    https://en.wikipedia.org/wiki/Image_moment.
+    .
+    """
+
+    if data.ndim > 1:
+        result = [_center_of_gravity(data[i]) for i in range(data.shape[0])]
+        result = np.transpose(result)
+        return result[0], result[1]
+
+    assert data.ndim == 1
+    valid_indices = np.isfinite(data)
+
+    indices = np.arange(data.shape[-1])
+    indices = indices[valid_indices]
+    data = data[valid_indices]
+
+    mean = np.nansum(indices * data) / np.nansum(data)
+    variance = np.nansum((indices - mean) ** 2 * data) / np.nansum(data)
+
+    if variance < 0:
+        # this may happen for negative data?
+        variance = -variance
+
+    return mean, math.sqrt(variance)
