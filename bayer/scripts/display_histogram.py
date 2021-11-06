@@ -12,7 +12,7 @@ from bayer.to_rgb import rawpy_to_rgb
 from bayer.utils import multi_glob
 
 
-def main():
+def main_raw():
     import rawpy
 
     parser = _create_argument_parser('one or more raw files containing bayer matrices')
@@ -83,8 +83,3 @@ def _plot_histogram(title, layers, max_range, sigma, clipping):
     fig.tight_layout(pad=0.5, h_pad=0.2, w_pad=0.2)
     plt.show()
     plt.close(fig)
-
-
-if __name__ == '__main__':
-    main()
-

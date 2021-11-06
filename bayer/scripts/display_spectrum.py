@@ -12,7 +12,7 @@ import numpy as np
 from bayer.extraction import FastExtraction
 from bayer.to_rgb import rawpy_to_rgb
 from bayer.utils import multi_glob
-from extraction import find_slit_in_images, find_spectra_in_layers
+from bayer.extraction import find_slit_in_images, find_spectra_in_layers
 
 
 def main_raw():
@@ -75,7 +75,7 @@ def _plot_file(filename, extractor, white_level, cut_spectra):
         minx, maxx = 0, size_x - 1
 
     rgb = rgb[:, miny:maxy, minx:maxx]
-    (_, size_y, size_x) = rgb.shape
+    (num_colors, size_y, size_x) = rgb.shape
 
     xrange = (0, size_x)
 
@@ -143,7 +143,3 @@ def _reshape_and_scale_image(data, max_camera_white_level, scale=False):
             plt_image[:, :, c] = np.nanmax(plt_image[:, :, c], axis=0)
 
     return plt_image
-
-
-if __name__ == '__main__':
-    main_raw()

@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 
 from bayer.extraction import FastExtraction, find_slit_in_images
 from bayer.to_rgb import rawpy_to_rgb
-from utils import multi_glob
+from bayer.utils import multi_glob
 
 
 def main_raw():
@@ -59,11 +59,6 @@ def _plot_file(filename, fast):
 
     contour_levels = np.transpose([zero_sigma, three_sigma, ten_sigma])
     contour_colors = 'none green red'.split()  # none sets alpha to zero
-
-    if num_layers == 3:
-        layer_titles = 'red green blue'.split()
-    elif num_layers == 1:
-        layer_titles = None
 
     fs = 24
     dpi = 150

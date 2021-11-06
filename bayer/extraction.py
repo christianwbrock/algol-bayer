@@ -1,5 +1,4 @@
 import functools
-import logging
 import math
 import numpy as np
 import functools
@@ -163,7 +162,7 @@ def _center_of_gravity(data):
     """\
     Return the weighted mean and standard deviation using moments.
 
-    Mean is the first raw moment while variance is the second central moment of he data.
+    Mean is the first raw moment while variance is the second central moment of the data.
     For more details have a look at https://en.wikipedia.org/wiki/Moment_(mathematics) or
     https://en.wikipedia.org/wiki/Image_moment.
     .

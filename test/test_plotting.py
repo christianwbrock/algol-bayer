@@ -35,7 +35,7 @@ def test_display_raw_histogram():
         if not os.path.exists(filename):
             continue
         sys.argv = ['dummy', filename]
-        display_histogram.main()
+        display_histogram.main_raw()
 
 
 def test_display_fits_histogram():
@@ -51,7 +51,7 @@ def test_help_histogram():
 
     with pytest.raises(SystemExit, match='0'):
         sys.argv = ['dummy', '--help']
-        display_histogram.main()
+        display_histogram.main_raw()
 
 
 def test_display_raw_spectrum():

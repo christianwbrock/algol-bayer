@@ -18,8 +18,7 @@ at the Dresden Gönnsdorf observatory.
         
                Create and display histograms by doubling the exposure times
                between min and max exposure time.
-               Example: bayer_capture_histograms.sh 30 240 will create histograms for exposures
-                        of 30, 60, 120 and 240 seconds.
+               Example: bayer_capture_histograms.sh 30 240 will create histograms for exposures of 30, 60, 120 and 240 seconds.
 
 
     $ bayer_capture_sequence.sh 
@@ -28,9 +27,7 @@ at the Dresden Gönnsdorf observatory.
         
                Capture and image sequence and store them as raw images.
         
-               Example: bayer_capture_sequence.sh zetori 20 1800 will capture 20 halve hour exposures
-                        zetori_1800_00.cr2, zetori_1800_01.cr2, ...
-
+               Example: bayer_capture_sequence.sh zetori 20 1800 will capture 20 halve hour exposures zetori_1800_00.cr2, zetori_1800_01.cr2, ...
 
 ## Convert
 
