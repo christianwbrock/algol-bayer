@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bayer.extraction import FastExtraction
-from bayer.to_rgb import rawpy_to_rgb
+from bayer.to_rgb import rawpy_to_rgb, fits_to_layers
 from bayer.utils import multi_glob
 from bayer.extraction import find_slit_in_images, find_spectra_in_layers
 
@@ -41,12 +41,13 @@ def main_fits():
 
     for filename in multi_glob(args.filename):
         with fits.open(filename) as hdu_list:
-            images = [hdu.data for hdu in hdu_list if hdu.header.get("NAXIS", 0) == 2]
+            images = [fits_to_layers(hdu) for hdu in hdu_list if hdu]
             if not images:
                 logging.error(f"{filename} contains no images")
 
             for image in images:
-                extractor = FastExtraction(image_layers=[image], sigma=args.sigma)
+                extractor = FastExtraction(image_layers=image, sigma=args.sigma)
+                # TODO 2**BITPIX
                 _plot_file(filename, extractor, 2**16, args.cut)
 
 

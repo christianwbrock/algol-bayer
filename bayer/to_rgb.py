@@ -5,6 +5,30 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
+def fits_to_layers(fits):
+    """\
+    Having a fits image, convert it into a RGB three layer image or  a single layer gray-scale-image.
+
+    :returns None if something fails
+    """
+    hdr = fits.header
+
+    naxis = hdr.get("NAXIS", 0)
+    if naxis == 3:
+        return fits.data
+
+    if naxis != 2:
+        return None
+
+    # only RGB images have a bayer pattern (?)
+    bayer_pattern = hdr.get('BAYERPAT')
+    if not bayer_pattern:
+        return [fits.data]
+
+    layers = bayer_to_layers(fits.data, [[1, 0], [3, 2]])
+    return combine_layers_by_color(layers, bayer_pattern, b'RGB')
+
+
 def rawpy_to_rgb(raw):
     """Extract RGB image from a rawpy bayer image."""
 
@@ -40,6 +64,9 @@ def combine_layers_by_color(layers, layer_color_desc, target_color_desc=b'RGB', 
     """
     assert len(layers) == len(layer_color_desc), f'length mismatch between layers and layer_color_desc'
 
+    if isinstance(layer_color_desc, str):
+        layer_color_desc = layer_color_desc.encode("UTF-8")
+
     combiner = getattr(np, method, None)
     assert callable(combiner), f'np.{method} does not exist or is not callable'
 
@@ -72,12 +99,17 @@ def bayer_to_layers(bayer, pattern):
 
     """
 
+    pattern = np.asarray(pattern)
     number_of_layers = np.max(pattern) + 1
     assert 0 <= np.min(pattern)
 
     layers = number_of_layers * [None]
 
     row_step_size, column_step_size = pattern.shape
+    rows, columns = np.shape(bayer)
+    if rows % row_step_size != 0 or columns % column_step_size != 0:
+        bayer = np.resize(bayer,
+                          (rows // row_step_size * row_step_size, columns // column_step_size * column_step_size))
 
     indices_y, indices_x = np.indices(pattern.shape)
     for start_row, start_column in zip(indices_y.ravel(), indices_x.ravel()):
