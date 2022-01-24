@@ -25,7 +25,8 @@ def fits_to_layers(fits):
     if not bayer_pattern:
         return [fits.data]
 
-    layers = bayer_to_layers(fits.data, [[1, 0], [3, 2]])
+    # 0123 has been validated w/ a Meade DSI IV on KStars
+    layers = bayer_to_layers(fits.data, [[0, 1], [2, 3]])
     return combine_layers_by_color(layers, bayer_pattern, b'RGB')
 
 

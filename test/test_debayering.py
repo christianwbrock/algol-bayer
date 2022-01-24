@@ -2,7 +2,7 @@ import os
 import sys
 import tempfile
 
-from scripts import debayerfits
+from scripts import debayer
 
 
 def test_debayer_with_output():
@@ -10,7 +10,7 @@ def test_debayer_with_output():
         output = tempfile.mktemp(suffix='-rgb.fits')
         sys.argv = ['dummy', fn, "--output", output]
         try:
-            debayerfits.main()
+            debayer.main()
         finally:
             os.remove(output)
 
@@ -18,9 +18,9 @@ def test_debayer_with_output():
 def test_debayer_wo_output():
     for fn in _get_filenames():
         sys.argv = ['dummy', fn]
-        output = debayerfits.create_output_filename(fn)
+        output = debayer.create_output_filename(fn)
         try:
-            debayerfits.main()
+            debayer.main()
         finally:
             os.remove(output)
 
