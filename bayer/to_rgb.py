@@ -71,11 +71,11 @@ def combine_layers_by_color(layers, layer_color_desc, target_color_desc=b'RGB', 
     combiner = getattr(np, method, None)
     assert callable(combiner), f'np.{method} does not exist or is not callable'
 
-    def combine_layers_of_color(color):
+    def _combine_layers_of_color(color):
         layers_of_correct_color = layers[np.nonzero(np.array(list(layer_color_desc)) == color)]
         return combiner(layers_of_correct_color, axis=0)
 
-    target = [combine_layers_of_color(color) for color in target_color_desc]
+    target = [_combine_layers_of_color(color) for color in target_color_desc]
     return np.array(target)
 
 
