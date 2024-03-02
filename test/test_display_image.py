@@ -3,7 +3,7 @@ import sys
 
 import pytest
 
-from scripts import display_image
+from bayer.scripts import display_image
 
 
 def _get_filenames():

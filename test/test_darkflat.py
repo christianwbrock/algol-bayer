@@ -3,7 +3,7 @@ import os
 import sys
 import tempfile
 
-from scripts import darkflat
+from bayer.scripts import darkflat
 
 
 def test_flats_and_darks():

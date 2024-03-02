@@ -2,7 +2,7 @@ import os
 import sys
 import tempfile
 
-from scripts import debayer
+from bayer.scripts import debayer
 
 
 def test_debayer_with_output():
