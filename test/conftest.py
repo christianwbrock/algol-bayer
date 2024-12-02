@@ -1,7 +1,5 @@
 import os
 
-import pytest
-
 
 def _data_dir():
     target = 'data'
@@ -46,9 +44,24 @@ def _get_fits_filenames():
     return [os.path.join(datadir, fn) for fn in filenames]
 
 
+def _get_fits_bayer_filenames():
+    datadir = _data_dir()
+
+    filenames = [
+        'minus20degC_Dark_60_secs_100.fits',
+    ]
+
+    return [os.path.join(datadir, fn) for fn in filenames]
+
+
 # Implement the pytest_generate_tests hook
 def pytest_generate_tests(metafunc):
     if 'raw_filename' in metafunc.fixturenames:
         metafunc.parametrize("raw_filename", _get_raw_filenames())
     elif 'fits_filename' in metafunc.fixturenames:
         metafunc.parametrize("fits_filename", _get_fits_filenames())
+    elif 'fits_bayer_filename' in metafunc.fixturenames:
+        metafunc.parametrize("fits_bayer_filename", _get_fits_bayer_filenames())
+    elif 'image_filename' in metafunc.fixturenames:
+        metafunc.parametrize("image_filename",
+                             _get_fits_bayer_filenames() + _get_raw_filenames() + _get_fits_filenames())
