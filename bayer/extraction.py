@@ -74,7 +74,7 @@ class FastExtraction:
     @property
     @functools.lru_cache(maxsize=None)
     def de_rotated_layers(self):
-        from scipy.ndimage.interpolation import rotate
+        from scipy.ndimage import rotate
 
         angle_deg = np.mean(self.de_rotation_angles_deg)
         return rotate(self.layers, angle_deg, axes=(1, 2), mode='constant', cval=np.nan)

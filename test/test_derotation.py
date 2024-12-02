@@ -1,6 +1,6 @@
 import numpy as np
 from pytest import approx
-from scipy.ndimage.interpolation import rotate
+from scipy.ndimage import rotate
 
 from bayer.extraction import FastExtraction
 
