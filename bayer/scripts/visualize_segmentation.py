@@ -93,6 +93,6 @@ def _plot_file(filename, fast):
 def _create_argument_parser(filename_help):
     parser = ArgumentParser(description='Visualize segmentation of an image')
     parser.add_argument('filename', nargs='+', help=filename_help)
-    parser.add_argument('--sigma', '-s', default=3.0, help='sigma used for clipping')
-    parser.add_argument('--clipping', '-c', default=10.0, help='clip background at mean + clipping * stddev')
+    parser.add_argument('--sigma', '-s', default=3.0, type=float, help='sigma used for clipping')
+    parser.add_argument('--clipping', '-c', default=10.0, type=float, help='clip background at mean + clipping * stddev')
     return parser

@@ -54,8 +54,8 @@ def main_fits():
 def _create_argument_parser(filename_help):
     parser = ArgumentParser(description='Display spectrum from a bayer matrix')
     parser.add_argument('filename', nargs='+', help=filename_help)
-    parser.add_argument('--sigma', '-s', default=3.0, help='sigma used for clipping')
-    parser.add_argument('--clipping', default=10.0, help='clip background at mean + clipping * stddev')
+    parser.add_argument('--sigma', '-s', default=3.0, type=float, help='sigma used for clipping')
+    parser.add_argument('--clipping', default=10.0, type=float, help='clip background at mean + clipping * stddev')
     cut_group = parser.add_mutually_exclusive_group()
     cut_group.add_argument('--cut', '-c', dest='cut', default=True, action='store_true',
                            help='cut spectrum in dispersion direction (the default)')
