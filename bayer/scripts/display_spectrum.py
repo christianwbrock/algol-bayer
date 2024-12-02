@@ -27,7 +27,7 @@ def main_raw():
     for filename in multi_glob(args.filename):
         with rawpy.imread(filename) as raw:
             extractor = FastExtraction(image_layers=rawpy_to_rgb(raw), sigma=args.sigma)
-            _plot_file(filename, extractor, raw.white_level, args.cut)
+            _plot_file(filename, extractor, raw.white_level, args.cut, args.store)
 
 
 def main_fits():
@@ -48,7 +48,7 @@ def main_fits():
             for image in images:
                 extractor = FastExtraction(image_layers=image, sigma=args.sigma)
                 # TODO 2**BITPIX
-                _plot_file(filename, extractor, 2**16, args.cut)
+                _plot_file(filename, extractor, 2 ** 16, args.cut, args.store)
 
 
 def _create_argument_parser(filename_help):
@@ -61,10 +61,11 @@ def _create_argument_parser(filename_help):
                            help='cut spectrum in dispersion direction (the default)')
     cut_group.add_argument('--dont-cut', '-C', dest='cut', action='store_false',
                            help='do not cut spectrum in dispersion direction')
+    parser.add_argument('--store', metavar='output.png', help='Store plot as file.')
     return parser
 
 
-def _plot_file(filename, extractor, white_level, cut_spectra):
+def _plot_file(filename, extractor, white_level, cut_spectra, store):
     rgb = extractor.de_rotated_layers
     num_colors, size_y, size_x = rgb.shape
 
@@ -80,7 +81,11 @@ def _plot_file(filename, extractor, white_level, cut_spectra):
 
     xrange = (0, size_x)
 
-    fig = plt.figure()
+    dpi = 150
+
+    figsize_x = (size_x * 1.5) / dpi + 1
+
+    fig = plt.figure(figsize=(figsize_x, figsize_x / 2), dpi=dpi)
     fig.canvas.manager.set_window_title(os.path.basename(filename))
 
     ax = plt.subplot2grid((12, 8), (0, 0), rowspan=10, colspan=7)
@@ -121,7 +126,10 @@ def _plot_file(filename, extractor, white_level, cut_spectra):
 
     fig.tight_layout(pad=0.5, h_pad=0.2, w_pad=0.2)
 
-    plt.show()
+    if store:
+        plt.savefig(store)
+    else:
+        plt.show()
     plt.close(fig)
 
 
