@@ -14,8 +14,9 @@ def fits_to_layers(fits):
     hdr = fits.header
 
     naxis = hdr.get("NAXIS", 0)
+    data = np.asarray(fits.data, dtype=np.float32)
     if naxis == 3:
-        return fits.data
+        return data
 
     if naxis != 2:
         return None
@@ -23,10 +24,10 @@ def fits_to_layers(fits):
     # only RGB images have a bayer pattern (?)
     bayer_pattern = hdr.get('BAYERPAT')
     if not bayer_pattern:
-        return [fits.data]
+        return [data]
 
     # 0123 has been validated w/ a Meade DSI IV on KStars
-    layers = bayer_to_layers(fits.data, [[0, 1], [2, 3]])
+    layers = bayer_to_layers(data, [[0, 1], [2, 3]])
     return combine_layers_by_color(layers, bayer_pattern, b'RGB')
 
 

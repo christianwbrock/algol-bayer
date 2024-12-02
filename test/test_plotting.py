@@ -24,6 +24,8 @@ def _get_fits_filenames():
 
     filenames = [
         'alpleo.FIT',
+        'gamOri_02.fit',
+        'alpOri_01.fit',
     ]
 
     return [os.path.join(datadir, fn) for fn in filenames]
