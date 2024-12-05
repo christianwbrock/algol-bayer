@@ -1,8 +1,7 @@
 import functools
 import math
-import numpy as np
-import functools
 
+import numpy as np
 from astropy.stats import sigma_clipped_stats
 
 

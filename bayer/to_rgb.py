@@ -64,7 +64,7 @@ def combine_layers_by_color(layers, layer_color_desc, target_color_desc=b'RGB', 
     ------
     array_like with the same length as target_color_desc
     """
-    assert len(layers) == len(layer_color_desc), f'length mismatch between layers and layer_color_desc'
+    assert len(layers) == len(layer_color_desc), 'length mismatch between layers and layer_color_desc'
 
     if isinstance(layer_color_desc, str):
         layer_color_desc = layer_color_desc.encode("UTF-8")
