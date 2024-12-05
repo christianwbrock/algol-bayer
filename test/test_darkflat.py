@@ -3,13 +3,18 @@ import os
 import sys
 import tempfile
 
+import pytest
+
 from bayer.scripts import darkflat
 
 
 def test_flats_and_darks():
+    data_folder = '/home/guest/Documents/Astro/data/2022-01-08-M1'
+    if not os.path.exists(data_folder):
+        pytest.skip("Data folder is not available")
+
     output_folder = tempfile.mkdtemp()
     try:
-        data_folder = '/home/guest/Documents/Astro/data/2022-01-08-M1'
         lights = data_folder + '/Light/*'
         darks = data_folder + '/Dark/*'
         flats = data_folder + '/Flat/*'
