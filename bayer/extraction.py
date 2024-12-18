@@ -119,16 +119,23 @@ class FastExtraction:
         return angle
 
 
-def find_slit_in_images(rgb, background_mean, scale=1.0):
+def find_slit_in_images(rgb, background_mean, scale=1.5):
 
     __, size_y, __ = rgb.shape
     wo_background = rgb - np.reshape(background_mean, (-1, 1, 1))
 
     slit_function = np.nanmean(wo_background, axis=(0, 2))
-    slit_center, slit_size = _center_of_gravity(slit_function)
+    miny, maxy = _find_smallest_interval(slit_function)
 
-    miny = math.floor(slit_center - scale * slit_size)
-    maxy = math.ceil(slit_center + scale * slit_size)
+    if scale != 1.0:
+        center = (miny + maxy) / 2
+        width = (maxy - miny) / 2
+
+        miny = center - scale * width
+        maxy = center + scale * width
+
+    miny = math.floor(miny)
+    maxy = math.ceil(maxy)
 
     miny = np.clip(miny, 0, size_y - 1)
     maxy = np.clip(maxy, 0, size_y - 1)
@@ -136,54 +143,33 @@ def find_slit_in_images(rgb, background_mean, scale=1.0):
     return miny, maxy
 
 
-def find_spectra_in_layers(rgb, background_mean, scale=1.5):
-
-    __, __, size_x = rgb.shape
-    wo_background = rgb - np.reshape(background_mean, (-1, 1, 1))
-
-    spectra = np.nanmean(wo_background, axis=1)
-
-    spectrum_locations, spectrum_widths = _center_of_gravity(spectra)
-
-    left_most_spectrum = np.argmin(spectrum_locations)
-    right_most_spectrum = np.argmax(spectrum_locations)
-
-    minx = math.floor(spectrum_locations[left_most_spectrum] - scale * spectrum_widths[left_most_spectrum])
-    maxx = math.ceil(spectrum_locations[right_most_spectrum] + scale * spectrum_widths[right_most_spectrum])
-
-    minx = np.clip(minx, 0, size_x - 1)
-    maxx = np.clip(maxx, 0, size_x - 1)
-
-    return minx, maxx
-
-
-def _center_of_gravity(data):
-    """\
-    Return the weighted mean and standard deviation using moments.
-
-    Mean is the first raw moment while variance is the second central moment of the data.
-    For more details have a look at https://en.wikipedia.org/wiki/Moment_(mathematics) or
-    https://en.wikipedia.org/wiki/Image_moment.
-    .
+def _find_smallest_interval(data, area_percentage=0.95):
     """
+    For a given array, find the smallest interval containing more than 95% of the data.
+    """
+    assert np.ndim(data) == 1
 
-    if data.ndim > 1:
-        result = [_center_of_gravity(data[i]) for i in range(data.shape[0])]
-        result = np.transpose(result)
-        return result[0], result[1]
+    sum_data = np.nansum(data)
+    target_sum = sum_data * area_percentage
+    assert 0 < target_sum < sum_data
 
-    assert data.ndim == 1
-    valid_indices = np.isfinite(data)
+    # simplifies the area calculation below
+    cumulative_data_sum = np.nancumsum(data)
 
-    indices = np.arange(data.shape[-1])
-    indices = indices[valid_indices]
-    data = data[valid_indices]
+    smallest_interval_size = len(data)
+    smallest_interval = None, None
 
-    mean = np.nansum(indices * data) / np.nansum(data)
-    variance = np.nansum((indices - mean) ** 2 * data) / np.nansum(data)
+    a = 0
+    b = 1
+    while a < b < len(data):
+        interval_sum = cumulative_data_sum[b] - cumulative_data_sum[a]
 
-    if variance < 0:
-        # this may happen for negative data?
-        variance = -variance
+        if interval_sum < target_sum:
+            b += 1
+        else:  # interval_sum >= target_sum
+            if b - a < smallest_interval_size:
+                smallest_interval_size = b - a
+                smallest_interval = a, b
+            a += 1
 
-    return mean, math.sqrt(variance)
+    return smallest_interval

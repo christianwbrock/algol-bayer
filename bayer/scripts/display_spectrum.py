@@ -10,9 +10,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bayer.extraction import FastExtraction
+from bayer.extraction import find_slit_in_images
 from bayer.to_rgb import rawpy_to_rgb, fits_to_layers
 from bayer.utils import multi_glob
-from bayer.extraction import find_slit_in_images, find_spectra_in_layers
 
 
 def main_raw():
@@ -27,7 +27,7 @@ def main_raw():
     for filename in multi_glob(args.filename):
         with rawpy.imread(filename) as raw:
             extractor = FastExtraction(image_layers=rawpy_to_rgb(raw), sigma=args.sigma)
-            _plot_file(filename, extractor, raw.white_level, args.cut, args.store)
+            _plot_file(filename, extractor, raw.white_level, args.store)
 
 
 def main_fits():
@@ -48,7 +48,7 @@ def main_fits():
             for image in images:
                 extractor = FastExtraction(image_layers=image, sigma=args.sigma)
                 # TODO 2**BITPIX
-                _plot_file(filename, extractor, 2 ** 16, args.cut, args.store)
+                _plot_file(filename, extractor, 2 ** 16, args.store)
 
 
 def _create_argument_parser(filename_help):
@@ -56,28 +56,17 @@ def _create_argument_parser(filename_help):
     parser.add_argument('filename', nargs='+', help=filename_help)
     parser.add_argument('--sigma', '-s', default=3.0, type=float, help='sigma used for clipping')
     parser.add_argument('--clipping', default=10.0, type=float, help='clip background at mean + clipping * stddev')
-    cut_group = parser.add_mutually_exclusive_group()
-    cut_group.add_argument('--cut', '-c', dest='cut', default=True, action='store_true',
-                           help='cut spectrum in dispersion direction (the default)')
-    cut_group.add_argument('--dont-cut', '-C', dest='cut', action='store_false',
-                           help='do not cut spectrum in dispersion direction')
     parser.add_argument('--store', metavar='output.png', help='Store plot as file.')
     return parser
 
 
-def _plot_file(filename, extractor, white_level, cut_spectra, store):
+def _plot_file(filename, extractor, white_level, store):
     rgb = extractor.de_rotated_layers
-    num_colors, size_y, size_x = rgb.shape
 
     miny, maxy = find_slit_in_images(rgb, extractor.background_mean)
 
-    if cut_spectra:
-        minx, maxx = find_spectra_in_layers(rgb, extractor.background_mean)
-    else:
-        minx, maxx = 0, size_x - 1
-
-    rgb = rgb[:, miny:maxy, minx:maxx]
-    (num_colors, size_y, size_x) = rgb.shape
+    rgb = rgb[:, miny:maxy, :]
+    num_colors, size_y, size_x = rgb.shape
 
     xrange = (0, size_x)
 
