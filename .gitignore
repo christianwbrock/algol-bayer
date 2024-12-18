@@ -1,5 +1,6 @@
 **/__pycache__/*.pyc
-.idea
+.idea/
 .cache
 algol_bayer.egg-info/
-venv
+venv/
+dist/
