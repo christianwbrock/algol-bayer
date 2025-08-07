@@ -4,6 +4,7 @@ Use image center-of-mass to extract spectra fast-and-dirty
 
 import logging
 import os.path
+import warnings
 from argparse import ArgumentParser
 
 import matplotlib.pyplot as plt
@@ -89,7 +90,10 @@ def _plot_file(filename, extractor, white_level, store):
         colors = 'k' * num_colors
 
     for color, layer in zip(colors, layers):
-        spec = np.nanmax(layer, axis=0)
+        # In some columns all values maybe nan, this can be ignored
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            spec = np.nanmax(layer, axis=0)
         ax.plot(range(*spec.shape), spec, color)
 
     ax.axhline(y=white_level, color='k', linestyle='--')
@@ -138,6 +142,9 @@ def _reshape_and_scale_image(data, max_camera_white_level, scale=False):
 
         # and replace each y-column with it's maximum
         for c in range(num_colors):
-            plt_image[:, :, c] = np.nanmax(plt_image[:, :, c], axis=0)
+            # In some columns all values maybe nan, this can be ignored
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=RuntimeWarning)
+                plt_image[:, :, c] = np.nanmax(plt_image[:, :, c], axis=0)
 
     return plt_image

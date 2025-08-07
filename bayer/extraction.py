@@ -1,4 +1,5 @@
 import math
+import warnings
 from functools import cached_property
 
 import numpy as np
@@ -119,7 +120,10 @@ def find_slit_in_images(rgb, background_mean, scale=1.5):
     __, size_y, __ = rgb.shape
     wo_background = rgb - np.reshape(background_mean, (-1, 1, 1))
 
-    slit_function = np.nanmean(wo_background, axis=(0, 2))
+    # In some rows all values maybe nan, this can be ignored
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        slit_function = np.nanmean(wo_background, axis=(0, 2))
     miny, maxy = _find_smallest_interval(slit_function)
 
     if scale != 1.0:
