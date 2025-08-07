@@ -1,5 +1,5 @@
-import functools
 import math
+from functools import cached_property
 
 import numpy as np
 from astropy.stats import sigma_clipped_stats
@@ -26,13 +26,11 @@ class FastExtraction:
         self.sigma = sigma
         self.clipping = clipping
 
-    @property
-    @functools.lru_cache(maxsize=None)
+    @cached_property
     def clipped_layers(self):
         return self._clip_image(self.layers, self.background_mean + self.background_stddev * self.clipping)
 
-    @property
-    @functools.lru_cache(maxsize=None)
+    @cached_property
     def _background_stats(self):
         return sigma_clipped_stats(self.layers, sigma_upper=self.sigma, sigma_lower=1000, cenfunc='mean', axis=(1, 2))
 
@@ -65,21 +63,18 @@ class FastExtraction:
     def de_rotation_angles_deg(self):
         return np.rad2deg(self.de_rotation_angles_rad)
 
-    @property
-    @functools.lru_cache(maxsize=None)
+    @cached_property
     def de_rotation_angles_rad(self):
         return np.array([self._calculate_de_rotation_angle(layer) for layer in self.clipped_layers])
 
-    @property
-    @functools.lru_cache(maxsize=None)
+    @cached_property
     def de_rotated_layers(self):
         from scipy.ndimage import rotate
 
         angle_deg = np.mean(self.de_rotation_angles_deg)
         return rotate(self.layers, angle_deg, axes=(1, 2), mode='constant', cval=np.nan)
 
-    @property
-    @functools.lru_cache(maxsize=None)
+    @cached_property
     def clipped_de_rotated_layers(self):
         mean, median, stddev = self._background_stats
         return self._clip_image(self.de_rotated_layers, mean + stddev * self.clipping)
