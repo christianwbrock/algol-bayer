@@ -1,6 +1,40 @@
 import os
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--dont-plot",
+        action='store_true',
+        default=False,
+        help="Disable plotting in tests"
+    )
+
+
+def pytest_configure(config):
+    """
+    Disable plotting if the parameter --no-plot has been used.
+
+    Set the matplotlib backend to 'agg' for tests that do not require a GUI.
+    This is useful for running tests in environments without a display.
+    """
+    if config.getoption("--dont-plot"):
+        import matplotlib
+        matplotlib.use('agg')
+
+
+# Implement the pytest_generate_tests hook
+def pytest_generate_tests(metafunc):
+    if 'raw_filename' in metafunc.fixturenames:
+        metafunc.parametrize("raw_filename", _get_raw_filenames())
+    elif 'fits_filename' in metafunc.fixturenames:
+        metafunc.parametrize("fits_filename", _get_fits_filenames())
+    elif 'fits_bayer_filename' in metafunc.fixturenames:
+        metafunc.parametrize("fits_bayer_filename", _get_fits_bayer_filenames())
+    elif 'image_filename' in metafunc.fixturenames:
+        metafunc.parametrize("image_filename",
+                             _get_fits_bayer_filenames() + _get_raw_filenames() + _get_fits_filenames())
+
+
 def _data_dir():
     target = 'data'
 
@@ -52,16 +86,3 @@ def _get_fits_bayer_filenames():
     ]
 
     return [os.path.join(datadir, fn) for fn in filenames]
-
-
-# Implement the pytest_generate_tests hook
-def pytest_generate_tests(metafunc):
-    if 'raw_filename' in metafunc.fixturenames:
-        metafunc.parametrize("raw_filename", _get_raw_filenames())
-    elif 'fits_filename' in metafunc.fixturenames:
-        metafunc.parametrize("fits_filename", _get_fits_filenames())
-    elif 'fits_bayer_filename' in metafunc.fixturenames:
-        metafunc.parametrize("fits_bayer_filename", _get_fits_bayer_filenames())
-    elif 'image_filename' in metafunc.fixturenames:
-        metafunc.parametrize("image_filename",
-                             _get_fits_bayer_filenames() + _get_raw_filenames() + _get_fits_filenames())
