@@ -1,3 +1,4 @@
+import contextlib
 import os
 
 
@@ -20,6 +21,22 @@ def pytest_configure(config):
     if config.getoption("--dont-plot"):
         import matplotlib
         matplotlib.use('agg')
+
+
+@contextlib.contextmanager
+def changed_environ(**changes):
+    """\
+    When changing the environ for a single test, all future tests will also see the changes.
+    This context manager resets the environment variable after leaving the context.
+    """
+
+    old_environ = dict(os.environ)
+    os.environ.update(changes)
+    try:
+        yield
+    finally:
+        os.environ.clear()
+        os.environ.update(old_environ)
 
 
 # Implement the pytest_generate_tests hook
