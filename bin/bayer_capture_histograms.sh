@@ -1,16 +1,15 @@
 #!/bin/bash
 
 PROG=$(basename $0)
-MIN=$1
-MAX=$2
+ALL_EXP_TIMES=$@
 
-if [ x$MIN = x -o x$MAX = x ]; then
-	echo usage: $PROG min-exp-time-s max-exp-time-s
+if [ -z "$ALL_EXP_TIMES" ]; then
+	echo usage: $PROG exposure-time-1 max-exp-time-2 ...
 	echo
-	echo "       Capture images and display histograms by doubling the exposure times"
-	echo "       between min and max exposure time."
-	echo "       Example: $PROG 30 240 will create histograms for exposures"
-	echo "                of 30, 60, 120 and 240 seconds."
+	echo "       Capture images and display histograms for a list of exposure times."
+
+	echo "       Example: $PROG 1/1000 1/100 1/10 1 10 100 will create histograms for exposures"
+	echo "                of 1/1000, 1/100, 1/10, 1, 10 and 100 seconds."
 	echo
 	exit 1
 fi
@@ -22,11 +21,13 @@ function display_hist()
 	bayer_display_histogram $1
 }
 
-gphoto2 --set-config eosviewfinder=1
+for EXP_TIME in $ALL_EXP_TIMES; do
+  echo capture $EXP_TIME seconds
 
-for ((i=$MIN; i <= $MAX; i*=2)); do
-	echo capture $i seconds
-	gphoto2 --quiet -B $i --capture-image-and-download --filename=x$i.cr2 && \
-	( display_hist x$i.cr2 & )
+  # for display purpose remove slash from exposure time using tr
+  DISPLAY_TIME=$(echo $EXP_TIME | tr '/' '_')
+  IMAGE_NAME=hist_$DISPLAY_TIME.cr2
+
+	capture_image $EXP_TIME $IMAGE_NAME && \
+	( display_hist $IMAGE_NAME & )
 done
-

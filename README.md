@@ -1,9 +1,10 @@
-#  Capture, display and convert RAW DSLR astronomical images
+# Capture, display and convert RAW DSLR astronomical images
 
 This package was developed for astro-spectroscopic student projects
 at the Dresden Gönnsdorf observatory.
 
-There are method to 
+There are method to
+
 * [Capture DSLR raw images](#capture-dslr-raw-images)
 * [Display raw DSLR images and spectra](#display-raw-dslr-images-and-spectra)
 * [Display fits images and spectra](#display-fits-images-and-spectra)
@@ -29,9 +30,21 @@ and [display the images as histogram](#display-raw-dslr-image-as-histogram).
 Capture a sequence of DSLR raw images and try to
 [display them as spectra](#display-raw-dslr-image-as-spectrum).
 
-    bayer_capture_sequence.sh 
+    bayer_capture_spectra.sh
+
+### Capture and display as image
+
+Capture a sequence of DSLR raw images and [display them as RGB images](#display-raw-dslr-image).
+
+    bayer_capture_images.sh
 
 ## Display raw DSLR images and spectra
+
+### Display raw DSLR image
+
+![alt text](./docs/article/img/alpori.png)
+
+    bayer_display_image --help
 
 ### Display raw DSLR image as histogram
 
@@ -41,7 +54,7 @@ Capture a sequence of DSLR raw images and try to
 
 ### Display raw DSLR image as spectrum
 
-There is a published paper explaining how this works. 
+There is a published paper explaining how this works.
 It can be found online or in the `docs/article` folder.
 
 ![alt text](./docs/article/img/alpori_spec.png)
@@ -60,7 +73,7 @@ It can be found online or in the `docs/article` folder.
 
 ![alt text](./docs/article/img/alpleo_spec.png)
 
-There is a published paper explaining how this works. 
+There is a published paper explaining how this works.
 It can be found online or in the `docs/article` folder.
 
     fits_display_spectrum --help
@@ -77,7 +90,7 @@ An example of how to do this can be found in `tests/test_darkflat.py`
 
 ### Create master flat
 
-... from a master-flat-dark and a set of flat images. 
+... from a master-flat-dark and a set of flat images.
 
     fits_create_master_flat --help
 
@@ -91,10 +104,9 @@ An example of how to do this can be found in `tests/test_darkflat.py`
 
     fits_debayer --help
 
-
 ## Links
 
- * https://github.com/christianwbrock/algol-bayer
- * http://gphoto.org/
- * https://pypi.org/project/rawpy/
+* https://github.com/christianwbrock/algol-bayer
+* http://gphoto.org/
+* https://pypi.org/project/rawpy/
 
