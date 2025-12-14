@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -eu
+
 PROG=$(basename $0)
 ALL_EXP_TIMES=$@
 
@@ -16,10 +18,8 @@ fi
 
 . $(dirname $0)/reset-camera.sh
 
-function display_hist()
-{
-	bayer_display_histogram $1
-}
+
+test_shutter_speeds $ALL_EXP_TIMES
 
 for EXP_TIME in $ALL_EXP_TIMES; do
   echo capture $EXP_TIME seconds
@@ -29,5 +29,5 @@ for EXP_TIME in $ALL_EXP_TIMES; do
   IMAGE_NAME=hist_$DISPLAY_TIME.cr2
 
 	capture_image $EXP_TIME $IMAGE_NAME && \
-	( display_hist $IMAGE_NAME & )
+	(bayer_display_histogram $IMAGE_NAME &)
 done
