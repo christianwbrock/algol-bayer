@@ -143,7 +143,7 @@ def _write_fits_using_header(data, input_filename, output_filename, overwrite):
 def _average(input, algorithm):
     assert input.ndim == 3
     if algorithm == 'mean':
-        output = np.nanmedian(input, axis=0)
+        output = np.nanmean(input, axis=0)
     elif algorithm == 'median':
         output = np.nanmedian(input, axis=0)
     else:
