@@ -16,6 +16,15 @@ There are method to
     apt-get install gphoto2
     pip install algol-bayer
 
+## Testing
+
+From a source checkout with test extras:
+
+    pip install -e .[test]
+    pytest --dont-plot --cov=bayer --cov-report=term-missing
+
+Some tests under `tests/` look for sample files in `data/`; those tests are skipped when a file is missing.
+
 ## Capture DSLR raw images
 
 ### Capture and display as histograms
