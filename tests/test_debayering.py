@@ -1,17 +1,14 @@
 import os
 import sys
-import tempfile
 
 from bayer.scripts import debayer
 
 
-def test_debayer_with_output(fits_bayer_filename):
-    output = tempfile.mktemp(suffix='-rgb.fits')
-    sys.argv = ['dummy', fits_bayer_filename, "--output", output]
-    try:
-        debayer.main()
-    finally:
-        os.remove(output)
+def test_debayer_with_output(fits_bayer_filename, tmp_path):
+    output = tmp_path / 'output-rgb.fits'
+    sys.argv = ['dummy', fits_bayer_filename, '--output', str(output)]
+    debayer.main()
+    assert output.exists()
 
 
 def test_debayer_wo_output(fits_bayer_filename):
@@ -20,4 +17,5 @@ def test_debayer_wo_output(fits_bayer_filename):
     try:
         debayer.main()
     finally:
-        os.remove(output)
+        if os.path.exists(output):
+            os.remove(output)
