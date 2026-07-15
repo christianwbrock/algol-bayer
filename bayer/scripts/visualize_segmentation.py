@@ -43,7 +43,8 @@ def main_fits():
                 logging.error(f"{filename} contains no images")
 
             for image in images:
-                extractor = FastExtraction(image_layers=[image], sigma=args.sigma)
+                extractor = FastExtraction(
+                    image_layers=[image], sigma=args.sigma, clipping=args.clipping)
                 _plot_file(filename, extractor)
 
 

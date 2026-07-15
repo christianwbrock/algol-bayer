@@ -27,7 +27,8 @@ def main_raw():
 
     for filename in multi_glob(args.filename):
         with rawpy.imread(filename) as raw:
-            extractor = FastExtraction(image_layers=rawpy_to_rgb(raw), sigma=args.sigma)
+            extractor = FastExtraction(
+                image_layers=rawpy_to_rgb(raw), sigma=args.sigma, clipping=args.clipping)
             _plot_file(filename, extractor, raw.white_level, args.store)
 
 
@@ -51,7 +52,8 @@ def main_fits():
                 if image is None:
                     continue
                 
-                extractor = FastExtraction(image_layers=image, sigma=args.sigma)
+                extractor = FastExtraction(
+                    image_layers=image, sigma=args.sigma, clipping=args.clipping)
                 white_level = fits_white_level(hdu.header, image)
                 _plot_file(filename, extractor, white_level, args.store)
 
