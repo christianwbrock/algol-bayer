@@ -13,7 +13,7 @@ import numpy as np
 from bayer.extraction import FastExtraction
 from bayer.extraction import find_slit_in_images
 from bayer.to_rgb import rawpy_to_rgb, fits_to_layers
-from bayer.utils import multi_glob
+from bayer.utils import fits_white_level, multi_glob
 
 
 def main_raw():
@@ -42,14 +42,18 @@ def main_fits():
 
     for filename in multi_glob(args.filename):
         with fits.open(filename) as hdu_list:
-            images = [fits_to_layers(hdu) for hdu in hdu_list if hdu]
-            if not images:
+            if not any(hdu for hdu in hdu_list):
                 logging.error(f"{filename} contains no images")
+                continue
 
-            for image in images:
+            for hdu in hdu_list:
+                image = fits_to_layers(hdu)
+                if image is None:
+                    continue
+                
                 extractor = FastExtraction(image_layers=image, sigma=args.sigma)
-                # TODO 2**BITPIX
-                _plot_file(filename, extractor, 2 ** 16, args.store)
+                white_level = fits_white_level(hdu.header, image)
+                _plot_file(filename, extractor, white_level, args.store)
 
 
 def _create_argument_parser(filename_help):

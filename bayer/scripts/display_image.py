@@ -9,9 +9,10 @@ from argparse import ArgumentParser
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+from astropy.io import fits
 
 from bayer.to_rgb import rawpy_to_rgb, fits_to_layers
-from bayer.utils import multi_glob
+from bayer.utils import fits_white_level, multi_glob
 
 
 def main():
@@ -52,9 +53,7 @@ def _plot_file(filename, image, scale, white_level=None):
     if scale:
         white_level = np.nanmax(image)
     elif white_level is None:
-        # let's hope, there is some hot pixel
-        maximum = np.nanmax(image)
-        white_level = 2 ** np.ceil(np.log2(maximum)) - 1
+        white_level = fits_white_level(fits.Header(), image)
 
     image = image / white_level
     num_colors, size_y, size_x = image.shape

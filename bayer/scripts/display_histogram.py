@@ -9,7 +9,7 @@ import numpy as np
 from astropy.stats import sigma_clipped_stats
 
 from bayer.to_rgb import rawpy_to_rgb
-from bayer.utils import multi_glob
+from bayer.utils import fits_white_level, multi_glob
 
 
 def main_raw():
@@ -39,12 +39,16 @@ def main_fits():
 
     for filename in multi_glob(args.filename):
         with fits.open(filename) as hdu_list:
-            images = [hdu.data for hdu in hdu_list if hdu.header.get("NAXIS", 0) == 2]
-            if not images:
+            if not any(hdu.header.get("NAXIS", 0) == 2 for hdu in hdu_list):
                 logging.error(f"{filename} contains no images")
+                continue
 
-            for image in images:
-                _plot_histogram(os.path.basename(filename), np.asarray([image]), 2 ** 16, args.sigma, args.clipping)
+            for hdu in hdu_list:
+                if hdu.header.get("NAXIS", 0) != 2:
+                    continue
+                image = hdu.data
+                max_range = fits_white_level(hdu.header, image)
+                _plot_histogram(os.path.basename(filename), np.asarray([image]), max_range, args.sigma, args.clipping)
 
 
 def _create_argument_parser(filename_help=None):
