@@ -35,9 +35,8 @@ def main():
         else:  # assume raw image
             import rawpy
 
-            for filename in multi_glob(args.filename):
-                with rawpy.imread(filename) as raw:
-                    _plot_file(filename, rawpy_to_rgb(raw), args.scale, raw.white_level)
+            with rawpy.imread(filename) as raw:
+                _plot_file(filename, rawpy_to_rgb(raw), args.scale, raw.white_level)
 
 
 def _create_argument_parser():
