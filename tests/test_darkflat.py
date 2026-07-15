@@ -24,6 +24,37 @@ def test_create_output_filename_without_slash():
     assert darkflat.create_output_filename('/foo/bar.fits', '/out', '-d') == '/out/bar-d.fits'
 
 
+def test_load_from_pattern_closes_fits_files(tmp_path, monkeypatch):
+    ones = np.ones((2, 2), dtype=np.float32)
+    for name in ('a.fits', 'b.fits'):
+        _write_mono_fits(tmp_path / name, ones)
+
+    exit_count = []
+    real_open = fits.open
+
+    class ClosingTracker:
+        def __init__(self, hdul):
+            self._hdul = hdul
+
+        def __enter__(self):
+            self._hdul.__enter__()
+            return self._hdul
+
+        def __exit__(self, *args):
+            exit_count.append(1)
+            return self._hdul.__exit__(*args)
+
+        def __getitem__(self, key):
+            return self._hdul[key]
+
+    monkeypatch.setattr('bayer.scripts.darkflat.fits.open',
+                        lambda fn: ClosingTracker(real_open(fn)))
+
+    result = darkflat._load_from_pattern(str(tmp_path / '*.fits'))
+    assert result.shape == (2, 2, 2)
+    assert len(exit_count) == 2
+
+
 def test_create_master_dark_mean(tmp_path):
     ones = np.ones((2, 2), dtype=np.float32)
     for i, scale in enumerate([1, 2, 6]):

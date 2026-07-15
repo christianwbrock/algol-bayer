@@ -178,7 +178,11 @@ def _load_from_pattern(pattern):
     if not filenames:
         raise SystemExit(f'no files for pattern "{pattern}"')
     # TODO load more than one image per file?
-    return np.asarray([fits.open(fn)[0].data for fn in filenames])
+    data = []
+    for fn in filenames:
+        with fits.open(fn) as hdul:
+            data.append(hdul[0].data)
+    return np.asarray(data)
 
 
 def create_output_filename(input_filename, folder, infix):
