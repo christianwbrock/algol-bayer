@@ -13,7 +13,7 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     """
-    Disable plotting if the parameter --no-plot has been used.
+    Disable plotting if the parameter --dont-plot has been used.
 
     Set the matplotlib backend to 'agg' for tests that do not require a GUI.
     This is useful for running tests in environments without a display.

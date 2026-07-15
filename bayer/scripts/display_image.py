@@ -1,5 +1,5 @@
 """\
-Use image center-of-mass to extract spectra fast-and-dirty
+Display fits or raw color or gray level images.
 """
 
 import logging

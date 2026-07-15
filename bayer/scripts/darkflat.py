@@ -1,5 +1,5 @@
 '''\
-Apply dork and flat images to one or more light images.
+Apply dark and flat images to one or more light images.
 '''
 import glob
 import sys

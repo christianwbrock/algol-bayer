@@ -3,7 +3,7 @@
 This package was developed for astro-spectroscopic student projects
 at the Dresden Gönnsdorf observatory.
 
-There are method to
+There are methods to
 
 * [Capture DSLR raw images](#capture-dslr-raw-images)
 * [Display raw DSLR images and spectra](#display-raw-dslr-images-and-spectra)
