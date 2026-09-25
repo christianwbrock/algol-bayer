@@ -1,7 +1,7 @@
 '''\
 Apply dark and flat images to one or more light images.
 '''
-import glob
+import logging
 import sys
 from os.path import basename, splitext, split
 from argparse import ArgumentParser
@@ -9,13 +9,12 @@ from argparse import ArgumentParser
 import numpy as np
 from astropy.io import fits
 
-import logging
+from bayer.utils import multi_glob
 
 DEFAULT_INFIX_DF = '-df'
 DEFAULT_INFIX_D = '-d'
 
 program_name = sys.argv[0] if sys.argv and sys.argv[0] else basename(__file__)
-logger = logging.getLogger(program_name)
 
 
 def apply_darks_and_flats():
@@ -32,8 +31,8 @@ def apply_darks_and_flats():
     parser.add_argument('--overwrite', default=False, action='store_true', help='Allow overwriting output')
     args = parser.parse_args()
 
-    lights = _load_from_pattern(args.lights)
-    input_filenames = _filenames(args.lights)
+    input_filenames = multi_glob(args.lights)
+    lights = _load_from_filenames(input_filenames)
 
     master_dark = _load_from_pattern(args.master_dark)
     assert master_dark.shape[0] == 1
@@ -67,11 +66,12 @@ def create_master_dark():
     parser.add_argument('--overwrite', default=False, action='store_true', help='Allow overwriting output')
     args = parser.parse_args()
 
-    darks = _load_from_pattern(args.darks)
+    filenames = multi_glob(args.darks)
+    darks = _load_from_filenames(filenames)
     output = _average(darks, args.algorithm)
     output = _format_array(output, args.output_format)
 
-    _write_fits_using_header(output, _filenames(args.darks)[0], args.output, args.overwrite)
+    _write_fits_using_header(output, filenames[0], args.output, args.overwrite)
 
 
 def create_master_flat():
@@ -88,8 +88,9 @@ def create_master_flat():
     parser.add_argument('--overwrite', default=False, action='store_true', help='Allow overwriting output')
     args = parser.parse_args()
 
-    first_filename = _filenames(args.flats)[0]
-    flats = _load_from_pattern(args.flats)
+    filenames = multi_glob(args.flats)
+    first_filename = filenames[0]
+    flats = _load_from_filenames(filenames)
     master_dark = _load_from_pattern(args.master_flat_dark)
     assert master_dark.shape[0] == 1
     flats = flats - master_dark
@@ -160,29 +161,17 @@ def _average(input, algorithm):
     return output
 
 
-def _filenames(patterns):
-    if isinstance(patterns, str):
-        patterns = [patterns]
-
-    result = []
-    for pattern in patterns:
-        filesnames = glob.glob(pattern, recursive=True)
-        if not filesnames:
-            logger.warning(f'pattern {pattern} yields no files')
-        result += filesnames
-    return result
-
-
-def _load_from_pattern(pattern):
-    filenames = _filenames(pattern)
-    if not filenames:
-        raise SystemExit(f'no files for pattern "{pattern}"')
+def _load_from_filenames(filenames):
     # TODO load more than one image per file?
     data = []
     for fn in filenames:
         with fits.open(fn) as hdul:
             data.append(hdul[0].data)
     return np.asarray(data)
+
+
+def _load_from_pattern(pattern):
+    return _load_from_filenames(multi_glob(pattern))
 
 
 def create_output_filename(input_filename, folder, infix):

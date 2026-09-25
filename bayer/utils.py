@@ -1,12 +1,24 @@
 import glob
+import logging
 
 import numpy as np
 
+logger = logging.getLogger(__name__)
+
 
 def multi_glob(filenames):
+    if isinstance(filenames, str):
+        filenames = [filenames]
+
     result = []
     for pattern in filenames:
-        result.extend(glob.glob(pattern))
+        matches = glob.glob(pattern, recursive=True)
+        if not matches:
+            logger.warning(f'no files for pattern "{pattern}"')
+        result.extend(matches)
+
+    if not result:
+        raise SystemExit(f'no files for any pattern in {filenames}')
 
     return result
 

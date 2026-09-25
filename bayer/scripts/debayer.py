@@ -3,7 +3,6 @@ For a bayer-masked raw fits file, e.g. generated using an astro color camera and
 convert the raw image into a 3 layer RGB fits image.
 """
 
-import glob
 import logging
 from argparse import ArgumentParser
 from os.path import basename, splitext
@@ -12,6 +11,7 @@ import numpy as np
 from astropy.io import fits
 
 from bayer.to_rgb import fits_to_layers
+from bayer.utils import multi_glob
 
 logger = logging.getLogger(__name__)
 
@@ -21,15 +21,7 @@ def main():
 
     args = _create_argument_parser().parse_args()
 
-    input_filenames = []
-    for pattern in args.filename:
-        this = glob.glob(pattern, recursive=True)
-        if not this:
-            logger.warning(f'no files for pattern "{pattern}"')
-        input_filenames += this
-
-    if not input_filenames:
-        raise SystemExit(f'no files for any pattern in {args.filename}')
+    input_filenames = multi_glob(args.filename)
 
     if len(input_filenames) > 1 and args.output:
         raise SystemExit('cannot use parameter --output with more than one input file')
