@@ -24,6 +24,36 @@ def test_help_fits_histogram():
     _test_help(display_histogram.main_fits)
 
 
+def test_fits_histogram_rgb_has_three_layers(tmp_path, monkeypatch):
+    rgb = np.stack([
+        np.full((4, 6), 10.0),
+        np.full((4, 6), 20.0),
+        np.full((4, 6), 30.0),
+    ])
+    path = tmp_path / 'rgb.fits'
+    fits.PrimaryHDU(rgb).writeto(path)
+
+    plotted = _run_fits_histogram(monkeypatch, path)
+
+    assert len(plotted) == 1
+    assert plotted[0].shape[0] == 3
+    np.testing.assert_array_equal(plotted[0], rgb)
+
+
+def test_fits_histogram_bayerpat_has_three_layers(tmp_path, monkeypatch):
+    mosaic = np.tile([[10.0, 20.0], [30.0, 40.0]], (2, 2))
+    header = fits.Header({'BAYERPAT': 'RGGB'})
+    path = tmp_path / 'bayer.fits'
+    fits.PrimaryHDU(mosaic, header=header).writeto(path)
+
+    plotted = _run_fits_histogram(monkeypatch, path)
+
+    assert len(plotted) == 1
+    assert plotted[0].shape[0] == 3
+    np.testing.assert_array_equal(plotted[0][0], 10)
+    np.testing.assert_array_equal(plotted[0][2], 40)
+
+
 def test_display_raw_spectrum(raw_filename):
     _test_method(raw_filename, display_spectrum.main_raw)
 
@@ -92,6 +122,66 @@ def test_display_fits_contour(fits_filename):
 
 def test_help_fits_contour():
     _test_help(visualize_segmentation.main_fits)
+
+
+def test_fits_segmentation_rgb_has_three_layers(tmp_path, monkeypatch):
+    rgb = np.stack([
+        np.full((4, 6), 10.0),
+        np.full((4, 6), 20.0),
+        np.full((4, 6), 30.0),
+    ])
+    path = tmp_path / 'rgb.fits'
+    fits.PrimaryHDU(rgb).writeto(path)
+
+    plotted = _run_fits_segmentation(monkeypatch, path)
+
+    assert len(plotted) == 1
+    assert plotted[0].shape[0] == 3
+    np.testing.assert_array_equal(plotted[0], rgb)
+
+
+def test_fits_segmentation_bayerpat_has_three_layers(tmp_path, monkeypatch):
+    mosaic = np.tile([[10.0, 20.0], [30.0, 40.0]], (2, 2))
+    header = fits.Header({'BAYERPAT': 'RGGB'})
+    path = tmp_path / 'bayer.fits'
+    fits.PrimaryHDU(mosaic, header=header).writeto(path)
+
+    plotted = _run_fits_segmentation(monkeypatch, path)
+
+    assert len(plotted) == 1
+    assert plotted[0].shape[0] == 3
+    np.testing.assert_array_equal(plotted[0][0], 10)
+    np.testing.assert_array_equal(plotted[0][2], 40)
+
+
+def _run_fits_histogram(monkeypatch, path):
+    plotted = []
+
+    def capture(title, layers, max_range, sigma, clipping):
+        plotted.append(np.asarray(layers))
+
+    monkeypatch.setattr(display_histogram, '_plot_histogram', capture)
+    monkeypatch.setattr(sys, 'argv', ['dummy', str(path)])
+    display_histogram.main_fits()
+    return plotted
+
+
+def _run_fits_segmentation(monkeypatch, path):
+    plotted = []
+
+    class DummyExtractor:
+        def __init__(self, image_layers, sigma=3.0, clipping=10.0):
+            self.layers = np.asarray(image_layers)
+
+    def capture(filename, extractor):
+        plotted.append(np.asarray(extractor.layers))
+
+    monkeypatch.setattr(
+        visualize_segmentation, 'FastExtraction', DummyExtractor)
+    monkeypatch.setattr(visualize_segmentation, '_plot_file', capture)
+    monkeypatch.setattr(sys, 'argv', ['dummy', str(path)])
+    visualize_segmentation.main_fits()
+    return plotted
 
 
 def _test_method(filename, method):

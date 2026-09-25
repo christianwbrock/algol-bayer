@@ -7,7 +7,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from bayer.extraction import FastExtraction, find_slit_in_images
-from bayer.to_rgb import rawpy_to_rgb
+from bayer.to_rgb import fits_to_layers, rawpy_to_rgb
 from bayer.utils import multi_glob
 
 
@@ -36,15 +36,20 @@ def main_fits():
     parser = _create_argument_parser('one or more fits files containing images')
     args = parser.parse_args()
 
+    logging.basicConfig(level=logging.INFO)
+
     for filename in multi_glob(args.filename):
         with fits.open(filename) as hdu_list:
-            images = [hdu.data for hdu in hdu_list if hdu.header.get("NAXIS", 0) == 2]
+            images = [fits_to_layers(hdu) for hdu in hdu_list if hdu]
+            images = [image for image in images if image is not None]
             if not images:
                 logging.error(f"{filename} contains no images")
+                continue
 
             for image in images:
                 extractor = FastExtraction(
-                    image_layers=[image], sigma=args.sigma, clipping=args.clipping)
+                    image_layers=image, sigma=args.sigma,
+                    clipping=args.clipping)
                 _plot_file(filename, extractor)
 
 
