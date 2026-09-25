@@ -94,7 +94,8 @@ def bayer_to_layers(bayer, pattern):
     ----------
 
     bayer : array_like of shape (r, c)
-        The original raw bayer image
+        The original raw bayer image.
+        Trailing rows and columns that do not form a complete pattern are cropped.
 
     pattern: array_like
         The smallest possible Bayer pattern of the image.
@@ -109,9 +110,10 @@ def bayer_to_layers(bayer, pattern):
 
     row_step_size, column_step_size = pattern.shape
     rows, columns = np.shape(bayer)
+
     if rows % row_step_size != 0 or columns % column_step_size != 0:
-        bayer = np.resize(bayer,
-                          (rows // row_step_size * row_step_size, columns // column_step_size * column_step_size))
+        logger.warning(f"Cropping image to {rows - rows % row_step_size}x{columns - columns % column_step_size}")
+        bayer = bayer[:rows - rows % row_step_size, :columns - columns % column_step_size]
 
     indices_y, indices_x = np.indices(pattern.shape)
     for start_row, start_column in zip(indices_y.ravel(), indices_x.ravel()):
