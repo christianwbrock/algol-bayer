@@ -30,6 +30,12 @@ def test_fits_white_level_from_data(header, data, expected):
 
 def test_fits_white_level_default_without_bitpix_or_data():
     assert fits_white_level(fits.Header()) == 65535
+    assert fits_white_level(None) == 65535
+
+
+def test_fits_white_level_none_header_estimates_from_data():
+    assert fits_white_level(fits.Header(), np.array([2773.0])) == 4095
+    assert fits_white_level(None, np.array([2773.0])) == 4095
 
 
 def test_fits_white_level_from_sample_file(fits_filename):

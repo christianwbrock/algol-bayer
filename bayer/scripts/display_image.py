@@ -23,15 +23,13 @@ def main():
 
     for filename in multi_glob(args.filename):
         if filename.upper().endswith('FIT') or filename.upper().endswith('FITS'):
-            import astropy.io.fits as fits
-
             with fits.open(filename) as hdu_list:
-                images = [fits_to_layers(hdu) for hdu in hdu_list if hdu]
+                images = [(fits_to_layers(hdu), hdu.header) for hdu in hdu_list if hdu]
                 if not images:
                     logging.error(f"{filename} contains no images")
 
-                for image in images:
-                    _plot_file(filename, image, args.scale, None)
+                for image, header in images:
+                    _plot_file(filename, image, args.scale, header=header)
 
         else:  # assume raw image
             import rawpy
@@ -47,13 +45,13 @@ def _create_argument_parser():
     return parser
 
 
-def _plot_file(filename, image, scale, white_level=None):
+def _plot_file(filename, image, scale, white_level=None, header=None):
     image = np.asarray(image)
 
     if scale:
         white_level = np.nanmax(image)
     elif white_level is None:
-        white_level = fits_white_level(fits.Header(), image)
+        white_level = fits_white_level(header, image)
 
     image = image / white_level
     num_colors, size_y, size_x = image.shape

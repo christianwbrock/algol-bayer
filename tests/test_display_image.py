@@ -2,8 +2,11 @@ import sys
 
 import numpy as np
 import pytest
+from astropy.io import fits
 
 from bayer.scripts import display_image
+from bayer.to_rgb import fits_to_layers
+from bayer.utils import fits_white_level
 
 
 def test_display_image(image_filename):
@@ -42,3 +45,33 @@ def test_help():
     with pytest.raises(SystemExit, match='0'):
         sys.argv = ['dummy', '--help']
         display_image.main()
+
+
+def test_fits_without_scale_uses_bitpix_white_level(tmp_path, monkeypatch):
+    data = np.array([[100, 2773], [200, 300]], dtype=np.uint16)
+    path = tmp_path / 'dim.fits'
+    fits.PrimaryHDU(data).writeto(path)
+
+    with fits.open(path) as hdul:
+        expected = fits_white_level(hdul[0].header, fits_to_layers(hdul[0]))
+        assert hdul[0].header['BITPIX'] == 16
+
+    captured = {}
+    original = display_image.fits_white_level
+
+    def capture_white_level(header, image=None):
+        captured['white_level'] = original(header, image)
+        captured['bitpix'] = header.get('BITPIX')
+        return captured['white_level']
+
+    monkeypatch.setattr(display_image, 'fits_white_level', capture_white_level)
+    monkeypatch.setattr(display_image.plt, 'show', lambda: None)
+    monkeypatch.setattr(display_image.plt, 'close', lambda *args, **kwargs: None)
+    monkeypatch.setattr(sys, 'argv', ['dummy', str(path)])
+
+    display_image.main()
+
+    assert captured['bitpix'] == 16
+    assert captured['white_level'] == 65535
+    assert captured['white_level'] == expected
+    assert captured['white_level'] != 2 ** int(np.ceil(np.log2(2773 + 1))) - 1

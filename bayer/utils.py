@@ -15,14 +15,17 @@ def fits_white_level(header, data=None):
     """\
     Return the maximum digital level for a FITS image.
 
-    Uses BITPIX when present (2**BITPIX - 1 for integer types). For floating-point
-    FITS or missing BITPIX, estimates from data or falls back to 16-bit full scale.
+    Uses BITPIX when a header is given and BITPIX is a positive integer
+    (2**BITPIX - 1). If header is None, BITPIX is missing, or BITPIX is
+    floating-point, estimates from data when provided, otherwise falls back
+    to 16-bit full scale.
     """
-    bitpix = header.get('BITPIX')
-    if bitpix is not None:
-        bitpix = int(bitpix)
-        if bitpix > 0:
-            return 2 ** bitpix - 1
+    if header is not None:
+        bitpix = header.get('BITPIX')
+        if bitpix is not None:
+            bitpix = int(bitpix)
+            if bitpix > 0:
+                return 2 ** bitpix - 1
 
     if data is not None:
         maximum = np.nanmax(data)
