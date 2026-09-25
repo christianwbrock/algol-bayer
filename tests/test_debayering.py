@@ -7,12 +7,12 @@ from astropy.io import fits
 from bayer.scripts import debayer
 
 
-def test_debayer_with_output(fits_bayer_filename, tmp_path):
+def test_debayer_with_output(fits_bayer_filename, tmp_path, monkeypatch):
     with fits.open(fits_bayer_filename) as hdul:
         input_rows, input_cols = hdul[0].data.shape
 
     output = tmp_path / 'output-rgb.fits'
-    sys.argv = ['dummy', fits_bayer_filename, '--output', str(output)]
+    monkeypatch.setattr(sys, 'argv', ['dummy', fits_bayer_filename, '--output', str(output)])
     debayer.main()
 
     with fits.open(output) as hdul:
@@ -27,8 +27,8 @@ def test_debayer_with_output(fits_bayer_filename, tmp_path):
         assert np.all(np.isfinite(data))
 
 
-def test_debayer_wo_output(fits_bayer_filename):
-    sys.argv = ['dummy', fits_bayer_filename]
+def test_debayer_wo_output(fits_bayer_filename, monkeypatch):
+    monkeypatch.setattr(sys, 'argv', ['dummy', fits_bayer_filename])
     output = debayer.create_output_filename(fits_bayer_filename)
     try:
         debayer.main()

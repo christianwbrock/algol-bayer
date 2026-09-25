@@ -8,20 +8,20 @@ from astropy.io import fits
 from bayer.scripts import display_histogram, display_spectrum, visualize_segmentation
 
 
-def test_display_raw_histogram(raw_filename):
-    _test_method(raw_filename, display_histogram.main_raw)
+def test_display_raw_histogram(raw_filename, monkeypatch):
+    _test_method(raw_filename, display_histogram.main_raw, monkeypatch)
 
 
-def test_help_raw_histogram():
-    _test_help(display_histogram.main_raw)
+def test_help_raw_histogram(monkeypatch):
+    _test_help(display_histogram.main_raw, monkeypatch)
 
 
-def test_display_fits_histogram(fits_filename):
-    _test_method(fits_filename, display_histogram.main_fits)
+def test_display_fits_histogram(fits_filename, monkeypatch):
+    _test_method(fits_filename, display_histogram.main_fits, monkeypatch)
 
 
-def test_help_fits_histogram():
-    _test_help(display_histogram.main_fits)
+def test_help_fits_histogram(monkeypatch):
+    _test_help(display_histogram.main_fits, monkeypatch)
 
 
 def test_fits_histogram_rgb_has_three_layers(tmp_path, monkeypatch):
@@ -54,16 +54,16 @@ def test_fits_histogram_bayerpat_has_three_layers(tmp_path, monkeypatch):
     np.testing.assert_array_equal(plotted[0][2], 40)
 
 
-def test_display_raw_spectrum(raw_filename):
-    _test_method(raw_filename, display_spectrum.main_raw)
+def test_display_raw_spectrum(raw_filename, monkeypatch):
+    _test_method(raw_filename, display_spectrum.main_raw, monkeypatch)
 
 
-def test_help_raw_spectrum():
-    _test_help(display_spectrum.main_raw)
+def test_help_raw_spectrum(monkeypatch):
+    _test_help(display_spectrum.main_raw, monkeypatch)
 
 
-def test_display_fits_spectrum(fits_filename):
-    _test_method(fits_filename, display_spectrum.main_fits)
+def test_display_fits_spectrum(fits_filename, monkeypatch):
+    _test_method(fits_filename, display_spectrum.main_fits, monkeypatch)
 
 
 def test_fits_spectrum_skips_empty_primary_and_extracts_extension(tmp_path, monkeypatch):
@@ -104,24 +104,24 @@ def test_fits_spectrum_with_only_empty_primary_does_not_plot(tmp_path, monkeypat
     assert 'contains no images' in caplog.text
 
 
-def test_help_fits_spectrum():
-    _test_help(display_spectrum.main_fits)
+def test_help_fits_spectrum(monkeypatch):
+    _test_help(display_spectrum.main_fits, monkeypatch)
 
 
-def test_display_raw_contour(raw_filename):
-    _test_method(raw_filename, visualize_segmentation.main_raw)
+def test_display_raw_contour(raw_filename, monkeypatch):
+    _test_method(raw_filename, visualize_segmentation.main_raw, monkeypatch)
 
 
-def test_help_raw_contour():
-    _test_help(visualize_segmentation.main_raw)
+def test_help_raw_contour(monkeypatch):
+    _test_help(visualize_segmentation.main_raw, monkeypatch)
 
 
-def test_display_fits_contour(fits_filename):
-    _test_method(fits_filename, visualize_segmentation.main_fits)
+def test_display_fits_contour(fits_filename, monkeypatch):
+    _test_method(fits_filename, visualize_segmentation.main_fits, monkeypatch)
 
 
-def test_help_fits_contour():
-    _test_help(visualize_segmentation.main_fits)
+def test_help_fits_contour(monkeypatch):
+    _test_help(visualize_segmentation.main_fits, monkeypatch)
 
 
 def test_fits_segmentation_rgb_has_three_layers(tmp_path, monkeypatch):
@@ -184,15 +184,15 @@ def _run_fits_segmentation(monkeypatch, path):
     return plotted
 
 
-def _test_method(filename, method):
+def _test_method(filename, method, monkeypatch):
     if not os.path.exists(filename):
         pytest.skip()
 
-    sys.argv = ['dummy', filename]
+    monkeypatch.setattr(sys, 'argv', ['dummy', filename])
     method()
 
 
-def _test_help(method):
+def _test_help(method, monkeypatch):
     with pytest.raises(SystemExit, match='0'):
-        sys.argv = ['dummy', '--help']
+        monkeypatch.setattr(sys, 'argv', ['dummy', '--help'])
         method()

@@ -9,9 +9,9 @@ from bayer.to_rgb import fits_to_layers
 from bayer.utils import fits_white_level
 
 
-def test_display_image(image_filename):
+def test_display_image(image_filename, monkeypatch):
 
-    sys.argv = ['dummy', '--scale', image_filename]
+    monkeypatch.setattr(sys, 'argv', ['dummy', '--scale', image_filename])
     display_image.main()
 
 
@@ -34,16 +34,16 @@ def test_main_displays_each_raw_file_once(monkeypatch):
     monkeypatch.setattr('bayer.scripts.display_image._plot_file',
                         lambda fn, *args: calls.append(fn))
 
-    sys.argv = ['dummy', 'ignored']
+    monkeypatch.setattr(sys, 'argv', ['dummy', 'ignored'])
     display_image.main()
 
     assert calls == ['a.cr2', 'b.cr2', 'c.cr2']
 
 
-def test_help():
+def test_help(monkeypatch):
 
     with pytest.raises(SystemExit, match='0'):
-        sys.argv = ['dummy', '--help']
+        monkeypatch.setattr(sys, 'argv', ['dummy', '--help'])
         display_image.main()
 
 
