@@ -9,6 +9,9 @@ def fits_to_layers(fits):
     """\
     Having a fits image, convert it into a RGB three layer image or  a single layer gray-scale-image.
 
+    2D Bayer images use BAYERPAT. XBAYROFF and YBAYROFF, if present, crop leading
+    columns and rows so the pattern origin is at (0, 0).
+
     :returns None if something fails
     """
     hdr = fits.header
@@ -25,6 +28,12 @@ def fits_to_layers(fits):
     bayer_pattern = hdr.get('BAYERPAT')
     if not bayer_pattern:
         return [data]
+
+    x_off = max(0, int(hdr.get('XBAYROFF', 0) or 0))
+    y_off = max(0, int(hdr.get('YBAYROFF', 0) or 0))
+    if x_off or y_off:
+        logger.info(f"Applying Bayer origin offset XBAYROFF={x_off}, YBAYROFF={y_off}")
+        data = data[y_off:, x_off:]
 
     # 0123 has been validated w/ a Meade DSI IV on KStars
     layers = bayer_to_layers(data, [[0, 1], [2, 3]])
