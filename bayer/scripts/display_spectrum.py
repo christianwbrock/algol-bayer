@@ -43,18 +43,16 @@ def main_fits():
 
     for filename in multi_glob(args.filename):
         with fits.open(filename) as hdu_list:
-            if not any(hdu for hdu in hdu_list):
+            images = [(fits_to_layers(hdu), hdu.header) for hdu in hdu_list if hdu]
+            images = [(image, header) for image, header in images if image is not None]
+            if not images:
                 logging.error(f"{filename} contains no images")
                 continue
 
-            for hdu in hdu_list:
-                image = fits_to_layers(hdu)
-                if image is None:
-                    continue
-                
+            for image, header in images:
                 extractor = FastExtraction(
                     image_layers=image, sigma=args.sigma, clipping=args.clipping)
-                white_level = fits_white_level(hdu.header, image)
+                white_level = fits_white_level(header, image)
                 _plot_file(filename, extractor, white_level, args.store)
 
 

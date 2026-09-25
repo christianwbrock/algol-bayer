@@ -75,3 +75,37 @@ def test_fits_without_scale_uses_bitpix_white_level(tmp_path, monkeypatch):
     assert captured['white_level'] == 65535
     assert captured['white_level'] == expected
     assert captured['white_level'] != 2 ** int(np.ceil(np.log2(2773 + 1))) - 1
+
+
+def test_fits_skips_empty_primary_and_plots_image_extension(tmp_path, monkeypatch):
+    data = np.array([[1, 2], [3, 4]], dtype=np.float32)
+    path = tmp_path / 'empty_primary.fits'
+    fits.HDUList([fits.PrimaryHDU(), fits.ImageHDU(data)]).writeto(path)
+
+    calls = []
+
+    def capture_plot(filename, image, scale, white_level=None, header=None):
+        calls.append(np.asarray(image))
+
+    monkeypatch.setattr(display_image, '_plot_file', capture_plot)
+    monkeypatch.setattr(sys, 'argv', ['dummy', str(path)])
+
+    display_image.main()
+
+    assert len(calls) == 1
+    np.testing.assert_array_equal(calls[0], [data])
+
+
+def test_fits_with_only_empty_primary_does_not_plot(tmp_path, monkeypatch, caplog):
+    path = tmp_path / 'no_image.fits'
+    fits.HDUList([fits.PrimaryHDU()]).writeto(path)
+
+    calls = []
+    monkeypatch.setattr(display_image, '_plot_file',
+                        lambda *args, **kwargs: calls.append(args))
+    monkeypatch.setattr(sys, 'argv', ['dummy', str(path)])
+
+    display_image.main()
+
+    assert calls == []
+    assert 'contains no images' in caplog.text

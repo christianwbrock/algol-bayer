@@ -25,8 +25,10 @@ def main():
         if filename.upper().endswith('FIT') or filename.upper().endswith('FITS'):
             with fits.open(filename) as hdu_list:
                 images = [(fits_to_layers(hdu), hdu.header) for hdu in hdu_list if hdu]
+                images = [(image, header) for image, header in images if image is not None]
                 if not images:
                     logging.error(f"{filename} contains no images")
+                    continue
 
                 for image, header in images:
                     _plot_file(filename, image, args.scale, header=header)
