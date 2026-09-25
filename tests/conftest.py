@@ -59,10 +59,15 @@ def _data_dir():
 
     while True:
         join = os.path.join(here, target)
-        parent, _ = os.path.split(here)
-
+        
         if os.path.exists(join):
             return join
+
+        parent, _ = os.path.split(here)
+
+        if os.path.exists(os.path.join(here, 'pyproject.toml')):
+            # We reached the project root and will not descend further
+            return None
 
         elif parent and parent != here:
             here = parent
